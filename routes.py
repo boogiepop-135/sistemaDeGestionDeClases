@@ -94,6 +94,15 @@ def get_profile():
         'created_at': user.created_at.isoformat()
     })
 
+@app.route('/api/test', methods=['GET'])
+def test_api():
+    """Endpoint de prueba para verificar que la API esté funcionando"""
+    return jsonify({
+        'message': 'API funcionando correctamente',
+        'timestamp': datetime.now().isoformat(),
+        'status': 'ok'
+    })
+
 # ==================== USUARIOS ====================
 
 @app.route('/api/users', methods=['GET'])

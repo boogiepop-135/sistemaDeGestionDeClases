@@ -176,26 +176,44 @@ async function loadDashboardData() {
             return;
         }
         
+        console.log('Intentando cargar datos del dashboard...');
+        console.log('Token:', token.substring(0, 20) + '...');
+        
         const response = await fetch('/api/dashboard/stats', {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
         
+        console.log('Respuesta del servidor:', response.status, response.statusText);
+        
         if (response.ok) {
             const data = await response.json();
+            console.log('Datos recibidos:', data);
             updateStats(data);
         } else if (response.status === 401) {
             // Token inválido o expirado
+            console.error('Token inválido o expirado');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
         } else {
-            console.error('Error loading dashboard data:', response.status);
+            console.error('Error loading dashboard data:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
         }
     } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        console.error('Error de red al cargar datos del dashboard:', error);
+        console.error('Error details:', error.message);
+        
+        // Si es un error de red, mostrar mensaje al usuario
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.error('Error de conexión con el servidor');
+            // No redirigir inmediatamente, solo mostrar error
+        }
     }
 }
 
@@ -220,23 +238,36 @@ async function loadRecentActivities() {
             return;
         }
         
+        console.log('Intentando cargar actividades recientes...');
+        
         const response = await fetch('/api/dashboard/recent-activities', {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
         
+        console.log('Respuesta actividades:', response.status, response.statusText);
+        
         if (response.ok) {
             const activities = await response.json();
+            console.log('Actividades recibidas:', activities);
             displayRecentActivities(activities);
         } else if (response.status === 401) {
+            console.error('Token inválido para actividades');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
+        } else {
+            console.error('Error loading recent activities:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error response actividades:', errorText);
         }
     } catch (error) {
-        console.error('Error loading recent activities:', error);
+        console.error('Error de red al cargar actividades:', error);
+        console.error('Error details:', error.message);
     }
 }
 
@@ -285,15 +316,22 @@ async function loadUpcomingClasses() {
             return;
         }
         
+        console.log('Intentando cargar próximas clases...');
+        
         const response = await fetch('/api/classes', {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
         
+        console.log('Respuesta clases:', response.status, response.statusText);
+        
         if (response.ok) {
             const classes = await response.json();
+            console.log('Clases recibidas:', classes);
             const upcoming = classes
                 .filter(cls => new Date(cls.schedule) > new Date())
                 .sort((a, b) => new Date(a.schedule) - new Date(b.schedule))
@@ -301,12 +339,18 @@ async function loadUpcomingClasses() {
             
             displayUpcomingClasses(upcoming);
         } else if (response.status === 401) {
+            console.error('Token inválido para clases');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
+        } else {
+            console.error('Error loading upcoming classes:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error response clases:', errorText);
         }
     } catch (error) {
-        console.error('Error loading upcoming classes:', error);
+        console.error('Error de red al cargar clases:', error);
+        console.error('Error details:', error.message);
     }
 }
 
@@ -457,11 +501,46 @@ function checkAuth() {
     }
 }
 
+// Probar conectividad de la API
+async function testApiConnection() {
+    try {
+        console.log('Probando conectividad de la API...');
+        const response = await fetch('/api/test', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        console.log('Respuesta de prueba:', response.status, response.statusText);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API funcionando:', data);
+            return true;
+        } else {
+            console.error('API no responde correctamente:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error de conectividad con la API:', error);
+        return false;
+    }
+}
+
 // Inicializar dashboard
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Verificar autenticación antes de cargar datos
     if (!checkAuth()) {
         return;
+    }
+    
+    // Probar conectividad primero
+    const apiWorking = await testApiConnection();
+    if (!apiWorking) {
+        console.error('La API no está respondiendo. Verificando configuración...');
+        // Continuar de todas formas para ver qué errores específicos obtenemos
     }
     
     loadDashboardData();
