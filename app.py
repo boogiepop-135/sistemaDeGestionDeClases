@@ -19,6 +19,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+app.config['JWT_ERROR_MESSAGE_KEY'] = 'error'
 
 # Configuración de email
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -36,6 +37,28 @@ jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 CORS(app)
+
+# Configurar manejo de errores JWT
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({
+        'error': 'Token expirado',
+        'message': 'El token ha expirado. Por favor, inicia sesión nuevamente.'
+    }), 401
+
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    return jsonify({
+        'error': 'Token inválido',
+        'message': 'El token proporcionado es inválido.'
+    }), 401
+
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    return jsonify({
+        'error': 'Token requerido',
+        'message': 'Se requiere un token de autenticación.'
+    }), 401
 
 # Importar rutas después de inicializar db
 from routes import *

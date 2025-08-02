@@ -238,8 +238,45 @@
 let users = [];
 let currentUser = null;
 
+// Verificar autenticación
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (!token || !user) {
+        console.log('No hay token o usuario, redirigiendo a login');
+        window.location.href = '/login';
+        return false;
+    }
+    
+    try {
+        const userData = JSON.parse(user);
+        console.log('Usuario autenticado:', userData.name, 'Rol:', userData.role);
+        
+        // Verificar permisos
+        if (userData.role !== 'superadmin' && userData.role !== 'admin') {
+            showAlert('No tienes permisos para acceder a esta página', 'danger');
+            window.location.href = '/dashboard';
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error al parsear datos del usuario:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return false;
+    }
+}
+
 // Cargar datos al iniciar
 document.addEventListener('DOMContentLoaded', function() {
+    // Verificar autenticación antes de cargar datos
+    if (!checkAuth()) {
+        return;
+    }
+    
     currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     loadUsers();
     
@@ -252,22 +289,49 @@ document.addEventListener('DOMContentLoaded', function() {
 // Cargar usuarios
 async function loadUsers() {
     try {
+        const token = localStorage.getItem('token');
+        
+        // Verificar si el token existe
+        if (!token) {
+            console.error('No se encontró token de autenticación');
+            showAlert('No hay token de autenticación. Por favor, inicia sesión nuevamente.', 'danger');
+            window.location.href = '/login';
+            return;
+        }
+        
+        console.log('Token encontrado:', token.substring(0, 20) + '...');
+        
         const response = await fetch('/api/users', {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
+        console.log('Respuesta de la API:', response.status, response.statusText);
+        
         if (response.ok) {
             users = await response.json();
+            console.log('Usuarios cargados:', users.length);
             displayUsers(users);
             updateStats();
+        } else if (response.status === 401) {
+            console.error('Token inválido o expirado');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
+        } else if (response.status === 403) {
+            const error = await response.json();
+            showAlert(error.error || 'No tienes permisos para ver usuarios', 'danger');
         } else {
-            showAlert('Error al cargar usuarios', 'danger');
+            const error = await response.json();
+            console.error('Error del servidor:', error);
+            showAlert(error.error || 'Error al cargar usuarios', 'danger');
         }
     } catch (error) {
-        console.error('Error:', error);
-        showAlert('Error de conexión', 'danger');
+        console.error('Error de conexión:', error);
+        showAlert('Error de conexión al cargar usuarios', 'danger');
     }
 }
 
@@ -336,6 +400,13 @@ function clearFilters() {
 
 // Crear usuario
 async function createUser() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('No hay token de autenticación', 'danger');
+        window.location.href = '/login';
+        return;
+    }
+    
     const formData = {
         name: document.getElementById('userName').value,
         email: document.getElementById('userEmail').value,
@@ -348,7 +419,7 @@ async function createUser() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(formData)
         });
@@ -358,6 +429,11 @@ async function createUser() {
             document.getElementById('createUserForm').reset();
             bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
             loadUsers();
+        } else if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
         } else {
             const error = await response.json();
             showAlert(error.error || 'Error al crear usuario', 'danger');
@@ -385,6 +461,13 @@ async function editUser(userId) {
 
 // Actualizar usuario
 async function updateUser() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('No hay token de autenticación', 'danger');
+        window.location.href = '/login';
+        return;
+    }
+    
     const userId = document.getElementById('editUserId').value;
     const formData = {
         name: document.getElementById('editUserName').value,
@@ -403,7 +486,7 @@ async function updateUser() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(formData)
         });
@@ -412,6 +495,11 @@ async function updateUser() {
             showAlert('Usuario actualizado exitosamente', 'success');
             bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
             loadUsers();
+        } else if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
         } else {
             const error = await response.json();
             showAlert(error.error || 'Error al actualizar usuario', 'danger');
@@ -428,17 +516,29 @@ async function deleteUser(userId) {
         return;
     }
     
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('No hay token de autenticación', 'danger');
+        window.location.href = '/login';
+        return;
+    }
+    
     try {
         const response = await fetch(`/api/users/${userId}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`
             }
         });
         
         if (response.ok) {
             showAlert('Usuario eliminado exitosamente', 'success');
             loadUsers();
+        } else if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
         } else {
             const error = await response.json();
             showAlert(error.error || 'Error al eliminar usuario', 'danger');

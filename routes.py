@@ -49,32 +49,36 @@ def register():
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    
-    # Validar campos requeridos
-    if not data or 'email' not in data or 'password' not in data:
-        return jsonify({'error': 'Email y contraseña son requeridos'}), 400
-    
-    user = User.query.filter_by(email=data['email']).first()
-    
-    if user and bcrypt.check_password_hash(user.password_hash, data['password']):
-        # Verificar que el usuario esté activo
-        if not user.is_active:
-            return jsonify({'error': 'Usuario inactivo'}), 401
-            
-        access_token = create_access_token(identity=user.id)
-        return jsonify({
-            'message': 'Login exitoso',
-            'token': access_token,
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'name': user.name,
-                'role': user.role
-            }
-        })
-    
-    return jsonify({'error': 'Credenciales inválidas'}), 401
+    try:
+        data = request.get_json()
+        
+        # Validar campos requeridos
+        if not data or 'email' not in data or 'password' not in data:
+            return jsonify({'error': 'Email y contraseña son requeridos'}), 400
+        
+        user = User.query.filter_by(email=data['email']).first()
+        
+        if user and bcrypt.check_password_hash(user.password_hash, data['password']):
+            # Verificar que el usuario esté activo
+            if hasattr(user, 'is_active') and not user.is_active:
+                return jsonify({'error': 'Usuario inactivo'}), 401
+                
+            access_token = create_access_token(identity=user.id)
+            return jsonify({
+                'message': 'Login exitoso',
+                'token': access_token,
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'name': user.name,
+                    'role': user.role
+                }
+            })
+        
+        return jsonify({'error': 'Credenciales inválidas'}), 401
+    except Exception as e:
+        print(f"Error en login: {e}")
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/auth/profile', methods=['GET'])
 @jwt_required()
@@ -95,21 +99,28 @@ def get_profile():
 @app.route('/api/users', methods=['GET'])
 @jwt_required()
 def get_users():
-    current_user = User.query.get(get_jwt_identity())
-    
-    # Solo superadmin y admin pueden ver usuarios
-    if current_user.role not in ['superadmin', 'admin']:
-        return jsonify({'error': 'No tienes permisos para ver usuarios'}), 403
-    
-    users = User.query.all()
-    return jsonify([{
-        'id': u.id,
-        'email': u.email,
-        'name': u.name,
-        'role': u.role,
-        'is_active': u.is_active,
-        'created_at': u.created_at.isoformat()
-    } for u in users])
+    try:
+        current_user = User.query.get(get_jwt_identity())
+        
+        if not current_user:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        # Solo superadmin y admin pueden ver usuarios
+        if current_user.role not in ['superadmin', 'admin']:
+            return jsonify({'error': 'No tienes permisos para ver usuarios'}), 403
+        
+        users = User.query.all()
+        return jsonify([{
+            'id': u.id,
+            'email': u.email,
+            'name': u.name,
+            'role': u.role,
+            'is_active': u.is_active if hasattr(u, 'is_active') else True,
+            'created_at': u.created_at.isoformat()
+        } for u in users])
+    except Exception as e:
+        print(f"Error en get_users: {e}")
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/users', methods=['POST'])
 @jwt_required()
