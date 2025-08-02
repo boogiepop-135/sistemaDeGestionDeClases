@@ -1,0 +1,761 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-chart-bar me-2 text-primary"></i>
+                Reportes y Analytics
+            </h1>
+            <p class="text-muted">Análisis detallado del rendimiento educativo</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2" onclick="exportAllReports()">
+                <i class="fas fa-download me-2"></i>
+                Exportar Todo
+            </button>
+            <button class="btn btn-primary" onclick="generateReport()">
+                <i class="fas fa-file-alt me-2"></i>
+                Generar Reporte
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="reportType" class="form-label">Tipo de Reporte</label>
+                    <select class="form-select" id="reportType">
+                        <option value="performance">Rendimiento Estudiantil</option>
+                        <option value="financial">Reporte Financiero</option>
+                        <option value="attendance">Asistencia</option>
+                        <option value="enrollment">Matrículas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="dateFrom" class="form-label">Fecha Desde</label>
+                    <input type="date" class="form-control" id="dateFrom">
+                </div>
+                <div class="col-md-3">
+                    <label for="dateTo" class="form-label">Fecha Hasta</label>
+                    <input type="date" class="form-control" id="dateTo">
+                </div>
+                <div class="col-md-3">
+                    <label for="courseFilter" class="form-label">Curso</label>
+                    <select class="form-select" id="courseFilter">
+                        <option value="">Todos los cursos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Report -->
+    <div class="card mb-4" id="performanceReport">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>
+                Rendimiento Estudiantil
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <canvas id="performanceChart" height="100"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>Promedio</th>
+                                    <th>Asistencia</th>
+                                </tr>
+                            </thead>
+                            <tbody id="performanceTable">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Report -->
+    <div class="card mb-4" id="financialReport" style="display: none;">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-dollar-sign me-2"></i>
+                Reporte Financiero
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <canvas id="financialChart" height="100"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Resumen Financiero</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Ingresos Totales:</span>
+                                <strong id="totalIncome">$0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Pagos Pendientes:</span>
+                                <strong id="pendingIncome">$0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Promedio Mensual:</span>
+                                <strong id="avgMonthly">$0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Total Estudiantes:</span>
+                                <strong id="totalStudents">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Report -->
+    <div class="card mb-4" id="attendanceReport" style="display: none;">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-check me-2"></i>
+                Reporte de Asistencia
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <canvas id="attendanceChart" height="200"></canvas>
+                </div>
+                <div class="col-lg-6">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>Asistencia</th>
+                                    <th>Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTable">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment Report -->
+    <div class="card mb-4" id="enrollmentReport" style="display: none;">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-user-plus me-2"></i>
+                Reporte de Matrículas
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <canvas id="enrollmentChart" height="100"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Estadísticas de Matrícula</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Matrículas:</span>
+                                <strong id="totalEnrollments">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Matrículas Activas:</span>
+                                <strong id="activeEnrollments">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Matrículas Completadas:</span>
+                                <strong id="completedEnrollments">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Tasa de Retención:</span>
+                                <strong id="retentionRate">0%</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                Datos Detallados
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="detailedTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Estudiante</th>
+                            <th>Curso</th>
+                            <th>Calificación</th>
+                            <th>Asistencia</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailedTableBody">
+                        <!-- Data will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let students = [];
+let courses = [];
+let payments = [];
+let grades = [];
+let attendance = [];
+let enrollments = [];
+let currentCharts = {};
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllData();
+    setupEventListeners();
+    setDefaultDates();
+});
+
+// Cargar todos los datos
+async function loadAllData() {
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Cargar datos en paralelo
+        const [studentsRes, coursesRes, paymentsRes, gradesRes, attendanceRes, enrollmentsRes] = await Promise.all([
+            fetch('/api/students', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/courses', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/payments', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/grades', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/attendance', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/enrollments', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        
+        if (studentsRes.ok) students = await studentsRes.json();
+        if (coursesRes.ok) courses = await coursesRes.json();
+        if (paymentsRes.ok) payments = await paymentsRes.json();
+        if (gradesRes.ok) grades = await gradesRes.json();
+        if (attendanceRes.ok) attendance = await attendanceRes.json();
+        if (enrollmentsRes.ok) enrollments = await enrollmentsRes.json();
+        
+        populateCourseFilter();
+        showPerformanceReport();
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showAlert('Error al cargar datos', 'danger');
+    }
+}
+
+// Configurar event listeners
+function setupEventListeners() {
+    document.getElementById('reportType').addEventListener('change', function() {
+        const reportType = this.value;
+        hideAllReports();
+        
+        switch(reportType) {
+            case 'performance':
+                showPerformanceReport();
+                break;
+            case 'financial':
+                showFinancialReport();
+                break;
+            case 'attendance':
+                showAttendanceReport();
+                break;
+            case 'enrollment':
+                showEnrollmentReport();
+                break;
+        }
+    });
+    
+    document.getElementById('dateFrom').addEventListener('change', updateReports);
+    document.getElementById('dateTo').addEventListener('change', updateReports);
+    document.getElementById('courseFilter').addEventListener('change', updateReports);
+}
+
+// Establecer fechas por defecto
+function setDefaultDates() {
+    const today = new Date();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    
+    document.getElementById('dateFrom').value = lastMonth.toISOString().split('T')[0];
+    document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+}
+
+// Poblar filtro de cursos
+function populateCourseFilter() {
+    const courseFilter = document.getElementById('courseFilter');
+    courseFilter.innerHTML = '<option value="">Todos los cursos</option>';
+    
+    courses.forEach(course => {
+        const option = document.createElement('option');
+        option.value = course.id;
+        option.textContent = course.name;
+        courseFilter.appendChild(option);
+    });
+}
+
+// Ocultar todos los reportes
+function hideAllReports() {
+    document.getElementById('performanceReport').style.display = 'none';
+    document.getElementById('financialReport').style.display = 'none';
+    document.getElementById('attendanceReport').style.display = 'none';
+    document.getElementById('enrollmentReport').style.display = 'none';
+}
+
+// Mostrar reporte de rendimiento
+function showPerformanceReport() {
+    document.getElementById('performanceReport').style.display = 'block';
+    createPerformanceChart();
+    updatePerformanceTable();
+}
+
+// Mostrar reporte financiero
+function showFinancialReport() {
+    document.getElementById('financialReport').style.display = 'block';
+    createFinancialChart();
+    updateFinancialSummary();
+}
+
+// Mostrar reporte de asistencia
+function showAttendanceReport() {
+    document.getElementById('attendanceReport').style.display = 'block';
+    createAttendanceChart();
+    updateAttendanceTable();
+}
+
+// Mostrar reporte de matrículas
+function showEnrollmentReport() {
+    document.getElementById('enrollmentReport').style.display = 'block';
+    createEnrollmentChart();
+    updateEnrollmentSummary();
+}
+
+// Crear gráfico de rendimiento
+function createPerformanceChart() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    
+    // Calcular promedios por estudiante
+    const studentPerformance = students.map(student => {
+        const studentGrades = grades.filter(g => g.student_id === student.id);
+        const avgGrade = studentGrades.length > 0 
+            ? studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length 
+            : 0;
+        
+        const studentAttendance = attendance.filter(a => a.student_id === student.id);
+        const attendanceRate = studentAttendance.length > 0
+            ? (studentAttendance.filter(a => a.status === 'presente').length / studentAttendance.length) * 100
+            : 0;
+        
+        return {
+            name: student.name,
+            avgGrade: avgGrade,
+            attendanceRate: attendanceRate
+        };
+    });
+    
+    const labels = studentPerformance.map(p => p.name);
+    const gradeData = studentPerformance.map(p => p.avgGrade);
+    const attendanceData = studentPerformance.map(p => p.attendanceRate);
+    
+    if (currentCharts.performance) {
+        currentCharts.performance.destroy();
+    }
+    
+    currentCharts.performance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Promedio de Calificaciones',
+                data: gradeData,
+                backgroundColor: 'rgba(30, 58, 138, 0.8)',
+                borderColor: '#1e3a8a',
+                borderWidth: 1
+            }, {
+                label: 'Tasa de Asistencia (%)',
+                data: attendanceData,
+                backgroundColor: 'rgba(5, 150, 105, 0.8)',
+                borderColor: '#059669',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+// Actualizar tabla de rendimiento
+function updatePerformanceTable() {
+    const tbody = document.getElementById('performanceTable');
+    
+    const studentPerformance = students.map(student => {
+        const studentGrades = grades.filter(g => g.student_id === student.id);
+        const avgGrade = studentGrades.length > 0 
+            ? studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length 
+            : 0;
+        
+        const studentAttendance = attendance.filter(a => a.student_id === student.id);
+        const attendanceRate = studentAttendance.length > 0
+            ? (studentAttendance.filter(a => a.status === 'presente').length / studentAttendance.length) * 100
+            : 0;
+        
+        return {
+            name: student.name,
+            avgGrade: avgGrade,
+            attendanceRate: attendanceRate
+        };
+    }).sort((a, b) => b.avgGrade - a.avgGrade);
+    
+    const rows = studentPerformance.map(p => `
+        <tr>
+            <td>${p.name}</td>
+            <td>${p.avgGrade.toFixed(2)}</td>
+            <td>${p.attendanceRate.toFixed(1)}%</td>
+        </tr>
+    `).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Crear gráfico financiero
+function createFinancialChart() {
+    const ctx = document.getElementById('financialChart').getContext('2d');
+    
+    // Agrupar pagos por mes
+    const monthlyData = {};
+    payments.filter(p => p.status === 'pagado').forEach(payment => {
+        const date = new Date(payment.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + payment.amount;
+    });
+    
+    const months = Object.keys(monthlyData).sort();
+    const income = months.map(month => monthlyData[month]);
+    
+    if (currentCharts.financial) {
+        currentCharts.financial.destroy();
+    }
+    
+    currentCharts.financial = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months.map(month => {
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+            }),
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: income,
+                borderColor: '#1e3a8a',
+                backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Actualizar resumen financiero
+function updateFinancialSummary() {
+    const totalIncome = payments.filter(p => p.status === 'pagado')
+        .reduce((sum, p) => sum + p.amount, 0);
+    
+    const pendingIncome = payments.filter(p => p.status === 'pendiente')
+        .reduce((sum, p) => sum + p.amount, 0);
+    
+    const monthlyPayments = payments.filter(p => {
+        const paymentDate = new Date(p.date);
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        return paymentDate.getMonth() === currentMonth && 
+               paymentDate.getFullYear() === currentYear &&
+               p.status === 'pagado';
+    });
+    
+    const avgMonthly = monthlyPayments.length > 0 
+        ? monthlyPayments.reduce((sum, p) => sum + p.amount, 0) / monthlyPayments.length 
+        : 0;
+    
+    document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString()}`;
+    document.getElementById('pendingIncome').textContent = `$${pendingIncome.toLocaleString()}`;
+    document.getElementById('avgMonthly').textContent = `$${avgMonthly.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+    document.getElementById('totalStudents').textContent = students.length;
+}
+
+// Crear gráfico de asistencia
+function createAttendanceChart() {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    
+    const attendanceStats = {
+        presente: attendance.filter(a => a.status === 'presente').length,
+        ausente: attendance.filter(a => a.status === 'ausente').length,
+        justificado: attendance.filter(a => a.status === 'justificado').length,
+        tardanza: attendance.filter(a => a.status === 'tardanza').length
+    };
+    
+    if (currentCharts.attendance) {
+        currentCharts.attendance.destroy();
+    }
+    
+    currentCharts.attendance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Presente', 'Ausente', 'Justificado', 'Tardanza'],
+            datasets: [{
+                data: [attendanceStats.presente, attendanceStats.ausente, attendanceStats.justificado, attendanceStats.tardanza],
+                backgroundColor: [
+                    '#059669',
+                    '#dc2626',
+                    '#eab308',
+                    '#f59e0b'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Actualizar tabla de asistencia
+function updateAttendanceTable() {
+    const tbody = document.getElementById('attendanceTable');
+    
+    const studentAttendance = students.map(student => {
+        const studentAttendance = attendance.filter(a => a.student_id === student.id);
+        const presentCount = studentAttendance.filter(a => a.status === 'presente').length;
+        const totalCount = studentAttendance.length;
+        const attendanceRate = totalCount > 0 ? (presentCount / totalCount) * 100 : 0;
+        
+        return {
+            name: student.name,
+            present: presentCount,
+            total: totalCount,
+            rate: attendanceRate
+        };
+    }).sort((a, b) => b.rate - a.rate);
+    
+    const rows = studentAttendance.map(s => `
+        <tr>
+            <td>${s.name}</td>
+            <td>${s.present}/${s.total}</td>
+            <td>${s.rate.toFixed(1)}%</td>
+        </tr>
+    `).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Crear gráfico de matrículas
+function createEnrollmentChart() {
+    const ctx = document.getElementById('enrollmentChart').getContext('2d');
+    
+    // Agrupar matrículas por mes
+    const monthlyData = {};
+    enrollments.forEach(enrollment => {
+        const date = new Date(enrollment.enrollment_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+    });
+    
+    const months = Object.keys(monthlyData).sort();
+    const enrollmentCounts = months.map(month => monthlyData[month]);
+    
+    if (currentCharts.enrollment) {
+        currentCharts.enrollment.destroy();
+    }
+    
+    currentCharts.enrollment = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.map(month => {
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+            }),
+            datasets: [{
+                label: 'Matrículas',
+                data: enrollmentCounts,
+                backgroundColor: 'rgba(30, 58, 138, 0.8)',
+                borderColor: '#1e3a8a',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Actualizar resumen de matrículas
+function updateEnrollmentSummary() {
+    const totalEnrollments = enrollments.length;
+    const activeEnrollments = enrollments.filter(e => e.status === 'activo').length;
+    const completedEnrollments = enrollments.filter(e => e.status === 'completado').length;
+    const retentionRate = totalEnrollments > 0 ? (activeEnrollments / totalEnrollments) * 100 : 0;
+    
+    document.getElementById('totalEnrollments').textContent = totalEnrollments;
+    document.getElementById('activeEnrollments').textContent = activeEnrollments;
+    document.getElementById('completedEnrollments').textContent = completedEnrollments;
+    document.getElementById('retentionRate').textContent = `${retentionRate.toFixed(1)}%`;
+}
+
+// Actualizar reportes
+function updateReports() {
+    const reportType = document.getElementById('reportType').value;
+    
+    switch(reportType) {
+        case 'performance':
+            createPerformanceChart();
+            updatePerformanceTable();
+            break;
+        case 'financial':
+            createFinancialChart();
+            updateFinancialSummary();
+            break;
+        case 'attendance':
+            createAttendanceChart();
+            updateAttendanceTable();
+            break;
+        case 'enrollment':
+            createEnrollmentChart();
+            updateEnrollmentSummary();
+            break;
+    }
+}
+
+// Generar reporte
+function generateReport() {
+    const reportType = document.getElementById('reportType').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    // Aquí se podría implementar la generación de reportes PDF
+    showAlert('Reporte generado exitosamente', 'success');
+}
+
+// Exportar todos los reportes
+function exportAllReports() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "Estudiante,Curso,Calificación Promedio,Asistencia %,Estado\n"
+        + students.map(student => {
+            const studentGrades = grades.filter(g => g.student_id === student.id);
+            const avgGrade = studentGrades.length > 0 
+                ? studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length 
+                : 0;
+            
+            const studentAttendance = attendance.filter(a => a.student_id === student.id);
+            const attendanceRate = studentAttendance.length > 0
+                ? (studentAttendance.filter(a => a.status === 'presente').length / studentAttendance.length) * 100
+                : 0;
+            
+            return `"${student.name}","N/A","${avgGrade.toFixed(2)}","${attendanceRate.toFixed(1)}%","${student.status}"`;
+        }).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "reporte_completo.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    setTimeout(() => {
+        const alert = mainContent.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

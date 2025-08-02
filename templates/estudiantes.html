@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+
+{% block title %}Estudiantes - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-users me-2 text-primary"></i>
+                Gestión de Estudiantes
+            </h1>
+            <p class="text-muted">Administra la información de los estudiantes</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="fas fa-plus me-2"></i>
+            Nuevo Estudiante
+        </button>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar estudiantes...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="graduado">Graduado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="courseFilter">
+                        <option value="">Todos los cursos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="exportStudents()">
+                        <i class="fas fa-download me-2"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Lista de Estudiantes
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Fecha de Matrícula</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Cargando estudiantes...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Student Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Nuevo Estudiante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="studentForm">
+                    <input type="hidden" id="studentId">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="studentName" class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-control" id="studentName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="studentEmail" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="studentEmail" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="studentPhone" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="studentPhone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parentPhone" class="form-label">Teléfono del Padre/Tutor</label>
+                            <input type="tel" class="form-control" id="parentPhone">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="birthDate" class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control" id="birthDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="studentStatus" class="form-label">Estado</label>
+                            <select class="form-select" id="studentStatus">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                                <option value="graduado">Graduado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="studentAddress" class="form-label">Dirección</label>
+                        <textarea class="form-control" id="studentAddress" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="studentNotes" class="form-label">Notas</label>
+                        <textarea class="form-control" id="studentNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveStudent()">
+                    <i class="fas fa-save me-2"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user me-2"></i>
+                    Detalles del Estudiante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let students = [];
+let courses = [];
+let studentModal, studentDetailsModal;
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+    studentDetailsModal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+    
+    loadStudents();
+    loadCourses();
+    
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', filterStudents);
+    document.getElementById('statusFilter').addEventListener('change', filterStudents);
+    document.getElementById('courseFilter').addEventListener('change', filterStudents);
+});
+
+// Cargar estudiantes
+async function loadStudents() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/students', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            students = await response.json();
+            displayStudents(students);
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+        showAlert('Error al cargar estudiantes', 'danger');
+    }
+}
+
+// Cargar cursos para el filtro
+async function loadCourses() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/courses', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            courses = await response.json();
+            populateCourseFilter();
+        }
+    } catch (error) {
+        console.error('Error loading courses:', error);
+    }
+}
+
+// Poblar filtro de cursos
+function populateCourseFilter() {
+    const courseFilter = document.getElementById('courseFilter');
+    courses.forEach(course => {
+        const option = document.createElement('option');
+        option.value = course.id;
+        option.textContent = course.name;
+        courseFilter.appendChild(option);
+    });
+}
+
+// Mostrar estudiantes
+function displayStudents(studentsToShow) {
+    const tbody = document.getElementById('studentsTableBody');
+    
+    if (studentsToShow.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">No se encontraron estudiantes</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const rows = studentsToShow.map(student => {
+        const statusBadge = getStatusBadge(student.status);
+        const enrollmentDate = new Date(student.enrollment_date).toLocaleDateString();
+        
+        return `
+            <tr>
+                <td>${student.id}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-2">
+                            <i class="fas fa-user text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${student.name}</div>
+                            <small class="text-muted">ID: ${student.id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>${student.email}</td>
+                <td>${student.phone || '-'}</td>
+                <td>${statusBadge}</td>
+                <td>${enrollmentDate}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="viewStudent(${student.id})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="editStudent(${student.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteStudent(${student.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Obtener badge de estado
+function getStatusBadge(status) {
+    const badges = {
+        'activo': '<span class="badge badge-success">Activo</span>',
+        'inactivo': '<span class="badge badge-danger">Inactivo</span>',
+        'graduado': '<span class="badge badge-warning">Graduado</span>'
+    };
+    return badges[status] || '<span class="badge badge-secondary">Desconocido</span>';
+}
+
+// Filtrar estudiantes
+function filterStudents() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const courseFilter = document.getElementById('courseFilter').value;
+    
+    let filtered = students.filter(student => {
+        const matchesSearch = student.name.toLowerCase().includes(searchTerm) ||
+                             student.email.toLowerCase().includes(searchTerm);
+        const matchesStatus = !statusFilter || student.status === statusFilter;
+        
+        return matchesSearch && matchesStatus;
+    });
+    
+    displayStudents(filtered);
+}
+
+// Abrir modal de creación
+function openCreateModal() {
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-plus me-2"></i>Nuevo Estudiante';
+    document.getElementById('studentForm').reset();
+    document.getElementById('studentId').value = '';
+    studentModal.show();
+}
+
+// Editar estudiante
+async function editStudent(studentId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/students/${studentId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const student = await response.json();
+            populateStudentForm(student);
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Estudiante';
+            studentModal.show();
+        }
+    } catch (error) {
+        console.error('Error loading student:', error);
+        showAlert('Error al cargar estudiante', 'danger');
+    }
+}
+
+// Poblar formulario de estudiante
+function populateStudentForm(student) {
+    document.getElementById('studentId').value = student.id;
+    document.getElementById('studentName').value = student.name;
+    document.getElementById('studentEmail').value = student.email;
+    document.getElementById('studentPhone').value = student.phone || '';
+    document.getElementById('parentPhone').value = student.parent_phone || '';
+    document.getElementById('birthDate').value = student.birth_date || '';
+    document.getElementById('studentStatus').value = student.status;
+    document.getElementById('studentAddress').value = student.address || '';
+    document.getElementById('studentNotes').value = student.notes || '';
+}
+
+// Guardar estudiante
+async function saveStudent() {
+    const form = document.getElementById('studentForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const studentData = {
+        name: document.getElementById('studentName').value,
+        email: document.getElementById('studentEmail').value,
+        phone: document.getElementById('studentPhone').value,
+        parent_phone: document.getElementById('parentPhone').value,
+        birth_date: document.getElementById('birthDate').value,
+        status: document.getElementById('studentStatus').value,
+        address: document.getElementById('studentAddress').value,
+        notes: document.getElementById('studentNotes').value
+    };
+    
+    const studentId = document.getElementById('studentId').value;
+    const isEdit = studentId !== '';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const url = isEdit ? `/api/students/${studentId}` : '/api/students';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(studentData)
+        });
+        
+        if (response.ok) {
+            studentModal.hide();
+            showAlert(isEdit ? 'Estudiante actualizado exitosamente' : 'Estudiante creado exitosamente', 'success');
+            loadStudents();
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Error al guardar estudiante', 'danger');
+        }
+    } catch (error) {
+        console.error('Error saving student:', error);
+        showAlert('Error al guardar estudiante', 'danger');
+    }
+}
+
+// Ver detalles del estudiante
+async function viewStudent(studentId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/students/${studentId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const student = await response.json();
+            displayStudentDetails(student);
+            studentDetailsModal.show();
+        }
+    } catch (error) {
+        console.error('Error loading student details:', error);
+        showAlert('Error al cargar detalles del estudiante', 'danger');
+    }
+}
+
+// Mostrar detalles del estudiante
+function displayStudentDetails(student) {
+    const content = document.getElementById('studentDetailsContent');
+    const enrollmentDate = new Date(student.enrollment_date).toLocaleDateString();
+    const birthDate = student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'No especificada';
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-muted">Información Personal</h6>
+                <p><strong>Nombre:</strong> ${student.name}</p>
+                <p><strong>Email:</strong> ${student.email}</p>
+                <p><strong>Teléfono:</strong> ${student.phone || 'No especificado'}</p>
+                <p><strong>Teléfono del Padre/Tutor:</strong> ${student.parent_phone || 'No especificado'}</p>
+                <p><strong>Fecha de Nacimiento:</strong> ${birthDate}</p>
+                <p><strong>Estado:</strong> ${getStatusBadge(student.status)}</p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Información Académica</h6>
+                <p><strong>Fecha de Matrícula:</strong> ${enrollmentDate}</p>
+                <p><strong>Dirección:</strong> ${student.address || 'No especificada'}</p>
+                <p><strong>Notas:</strong> ${student.notes || 'Sin notas'}</p>
+            </div>
+        </div>
+        <hr>
+        <div class="text-end">
+            <button class="btn btn-warning me-2" onclick="editStudent(${student.id}); studentDetailsModal.hide();">
+                <i class="fas fa-edit me-2"></i>Editar
+            </button>
+            <button class="btn btn-danger" onclick="deleteStudent(${student.id}); studentDetailsModal.hide();">
+                <i class="fas fa-trash me-2"></i>Eliminar
+            </button>
+        </div>
+    `;
+}
+
+// Eliminar estudiante
+async function deleteStudent(studentId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este estudiante?')) {
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/students/${studentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            showAlert('Estudiante eliminado exitosamente', 'success');
+            loadStudents();
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Error al eliminar estudiante', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting student:', error);
+        showAlert('Error al eliminar estudiante', 'danger');
+    }
+}
+
+// Exportar estudiantes
+function exportStudents() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Nombre,Email,Teléfono,Estado,Fecha de Matrícula\n"
+        + students.map(student => 
+            `${student.id},"${student.name}","${student.email}","${student.phone || ''}","${student.status}","${student.enrollment_date}"`
+        ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "estudiantes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insertar al inicio del contenido principal
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        const alert = mainContent.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

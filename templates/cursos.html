@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+
+{% block title %}Cursos - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-book me-2 text-primary"></i>
+                Gestión de Cursos
+            </h1>
+            <p class="text-muted">Administra los cursos y clases</p>
+        </div>
+        <div>
+            <button class="btn btn-success me-2" onclick="openCreateClassModal()">
+                <i class="fas fa-calendar-plus me-2"></i>
+                Nueva Clase
+            </button>
+            <button class="btn btn-primary" onclick="openCreateCourseModal()">
+                <i class="fas fa-plus me-2"></i>
+                Nuevo Curso
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Cursos</h6>
+                            <h3 id="totalCourses">0</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-book fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Cursos Activos</h6>
+                            <h3 id="activeCourses">0</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Clases</h6>
+                            <h3 id="totalClasses">0</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-calendar fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Ingresos Totales</h6>
+                            <h3 id="totalIncome">$0</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-dollar-sign fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Lista de Cursos
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Duración</th>
+                            <th>Precio</th>
+                            <th>Profesor</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Cargando cursos...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classes Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Clases Programadas
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Curso</th>
+                            <th>Profesor</th>
+                            <th>Fecha y Hora</th>
+                            <th>Duración</th>
+                            <th>Sala</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classesTableBody">
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Cargando clases...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Course Modal -->
+<div class="modal fade" id="courseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="courseModalTitle">
+                    <i class="fas fa-book me-2"></i>
+                    Nuevo Curso
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="courseForm">
+                    <input type="hidden" id="courseId">
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="courseName" class="form-label">Nombre del Curso *</label>
+                            <input type="text" class="form-control" id="courseName" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="coursePrice" class="form-label">Precio *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="coursePrice" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="courseDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="courseDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="courseDuration" class="form-label">Duración</label>
+                            <input type="text" class="form-control" id="courseDuration" placeholder="ej: 3 meses">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="maxStudents" class="form-label">Máximo Estudiantes</label>
+                            <input type="number" class="form-control" id="maxStudents" value="20">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="courseStatus" class="form-label">Estado</label>
+                            <select class="form-select" id="courseStatus">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                                <option value="completado">Completado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="teacherId" class="form-label">Profesor *</label>
+                        <select class="form-select" id="teacherId" required>
+                            <option value="">Seleccionar profesor...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveCourse()">
+                    <i class="fas fa-save me-2"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Class Modal -->
+<div class="modal fade" id="classModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="classModalTitle">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Nueva Clase
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="classForm">
+                    <input type="hidden" id="classId">
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="classTitle" class="form-label">Título de la Clase *</label>
+                            <input type="text" class="form-control" id="classTitle" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="classDuration" class="form-label">Duración (minutos)</label>
+                            <input type="number" class="form-control" id="classDuration" value="60">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="classCourseId" class="form-label">Curso *</label>
+                            <select class="form-select" id="classCourseId" required>
+                                <option value="">Seleccionar curso...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="classTeacherId" class="form-label">Profesor *</label>
+                            <select class="form-select" id="classTeacherId" required>
+                                <option value="">Seleccionar profesor...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="classSchedule" class="form-label">Fecha y Hora *</label>
+                            <input type="datetime-local" class="form-control" id="classSchedule" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="classRoom" class="form-label">Sala</label>
+                            <input type="text" class="form-control" id="classRoom" placeholder="ej: Aula 101">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="classDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="classDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="classStatus" class="form-label">Estado</label>
+                        <select class="form-select" id="classStatus">
+                            <option value="programada">Programada</option>
+                            <option value="en_curso">En Curso</option>
+                            <option value="completada">Completada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveClass()">
+                    <i class="fas fa-save me-2"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let courses = [];
+let classes = [];
+let teachers = [];
+let courseModal, classModal;
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    courseModal = new bootstrap.Modal(document.getElementById('courseModal'));
+    classModal = new bootstrap.Modal(document.getElementById('classModal'));
+    
+    loadCourses();
+    loadClasses();
+    loadTeachers();
+    updateStats();
+});
+
+// Cargar cursos
+async function loadCourses() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/courses', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            courses = await response.json();
+            displayCourses(courses);
+            populateCourseSelects();
+        }
+    } catch (error) {
+        console.error('Error loading courses:', error);
+        showAlert('Error al cargar cursos', 'danger');
+    }
+}
+
+// Cargar clases
+async function loadClasses() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/classes', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            classes = await response.json();
+            displayClasses(classes);
+        }
+    } catch (error) {
+        console.error('Error loading classes:', error);
+        showAlert('Error al cargar clases', 'danger');
+    }
+}
+
+// Cargar profesores
+async function loadTeachers() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/users', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const users = await response.json();
+            teachers = users.filter(user => user.role === 'profesor' || user.role === 'admin');
+            populateTeacherSelects();
+        }
+    } catch (error) {
+        console.error('Error loading teachers:', error);
+    }
+}
+
+// Mostrar cursos
+function displayCourses(coursesToShow) {
+    const tbody = document.getElementById('coursesTableBody');
+    
+    if (coursesToShow.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">No se encontraron cursos</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const rows = coursesToShow.map(course => {
+        const teacher = teachers.find(t => t.id === course.teacher_id);
+        const statusBadge = getStatusBadge(course.status);
+        
+        return `
+            <tr>
+                <td>${course.id}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-2">
+                            <i class="fas fa-book text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${course.name}</div>
+                            <small class="text-muted">ID: ${course.id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>${course.description || '-'}</td>
+                <td>${course.duration || '-'}</td>
+                <td>$${course.price.toLocaleString()}</td>
+                <td>${teacher ? teacher.name : 'No asignado'}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="viewCourse(${course.id})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="editCourse(${course.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteCourse(${course.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Mostrar clases
+function displayClasses(classesToShow) {
+    const tbody = document.getElementById('classesTableBody');
+    
+    if (classesToShow.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">No se encontraron clases</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const rows = classesToShow.map(cls => {
+        const course = courses.find(c => c.id === cls.course_id);
+        const teacher = teachers.find(t => t.id === cls.teacher_id);
+        const schedule = new Date(cls.schedule);
+        const statusBadge = getClassStatusBadge(cls.status);
+        
+        return `
+            <tr>
+                <td>${cls.id}</td>
+                <td>
+                    <div class="fw-bold">${cls.title}</div>
+                    <small class="text-muted">${cls.description || ''}</small>
+                </td>
+                <td>${course ? course.name : 'Curso no encontrado'}</td>
+                <td>${teacher ? teacher.name : 'Profesor no encontrado'}</td>
+                <td>
+                    <div>${schedule.toLocaleDateString()}</div>
+                    <small class="text-muted">${schedule.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                </td>
+                <td>${cls.duration} min</td>
+                <td>${cls.room || '-'}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-warning" onclick="editClass(${cls.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteClass(${cls.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Obtener badge de estado
+function getStatusBadge(status) {
+    const badges = {
+        'activo': '<span class="badge badge-success">Activo</span>',
+        'inactivo': '<span class="badge badge-danger">Inactivo</span>',
+        'completado': '<span class="badge badge-warning">Completado</span>'
+    };
+    return badges[status] || '<span class="badge badge-secondary">Desconocido</span>';
+}
+
+// Obtener badge de estado de clase
+function getClassStatusBadge(status) {
+    const badges = {
+        'programada': '<span class="badge badge-primary">Programada</span>',
+        'en_curso': '<span class="badge badge-warning">En Curso</span>',
+        'completada': '<span class="badge badge-success">Completada</span>',
+        'cancelada': '<span class="badge badge-danger">Cancelada</span>'
+    };
+    return badges[status] || '<span class="badge badge-secondary">Desconocido</span>';
+}
+
+// Poblar selects de cursos
+function populateCourseSelects() {
+    const courseSelect = document.getElementById('classCourseId');
+    courseSelect.innerHTML = '<option value="">Seleccionar curso...</option>';
+    
+    courses.forEach(course => {
+        const option = document.createElement('option');
+        option.value = course.id;
+        option.textContent = course.name;
+        courseSelect.appendChild(option);
+    });
+}
+
+// Poblar selects de profesores
+function populateTeacherSelects() {
+    const teacherSelects = ['teacherId', 'classTeacherId'];
+    
+    teacherSelects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.innerHTML = '<option value="">Seleccionar profesor...</option>';
+            
+            teachers.forEach(teacher => {
+                const option = document.createElement('option');
+                option.value = teacher.id;
+                option.textContent = teacher.name;
+                select.appendChild(option);
+            });
+        }
+    });
+}
+
+// Actualizar estadísticas
+function updateStats() {
+    document.getElementById('totalCourses').textContent = courses.length;
+    document.getElementById('activeCourses').textContent = courses.filter(c => c.status === 'activo').length;
+    document.getElementById('totalClasses').textContent = classes.length;
+    
+    const totalIncome = courses.reduce((sum, course) => sum + course.price, 0);
+    document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString()}`;
+}
+
+// Abrir modal de creación de curso
+function openCreateCourseModal() {
+    document.getElementById('courseModalTitle').innerHTML = '<i class="fas fa-book me-2"></i>Nuevo Curso';
+    document.getElementById('courseForm').reset();
+    document.getElementById('courseId').value = '';
+    courseModal.show();
+}
+
+// Abrir modal de creación de clase
+function openCreateClassModal() {
+    document.getElementById('classModalTitle').innerHTML = '<i class="fas fa-calendar-plus me-2"></i>Nueva Clase';
+    document.getElementById('classForm').reset();
+    document.getElementById('classId').value = '';
+    classModal.show();
+}
+
+// Guardar curso
+async function saveCourse() {
+    const form = document.getElementById('courseForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const courseData = {
+        name: document.getElementById('courseName').value,
+        description: document.getElementById('courseDescription').value,
+        duration: document.getElementById('courseDuration').value,
+        price: parseFloat(document.getElementById('coursePrice').value),
+        max_students: parseInt(document.getElementById('maxStudents').value),
+        teacher_id: parseInt(document.getElementById('teacherId').value),
+        status: document.getElementById('courseStatus').value
+    };
+    
+    const courseId = document.getElementById('courseId').value;
+    const isEdit = courseId !== '';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const url = isEdit ? `/api/courses/${courseId}` : '/api/courses';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(courseData)
+        });
+        
+        if (response.ok) {
+            courseModal.hide();
+            showAlert(isEdit ? 'Curso actualizado exitosamente' : 'Curso creado exitosamente', 'success');
+            loadCourses();
+            updateStats();
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Error al guardar curso', 'danger');
+        }
+    } catch (error) {
+        console.error('Error saving course:', error);
+        showAlert('Error al guardar curso', 'danger');
+    }
+}
+
+// Guardar clase
+async function saveClass() {
+    const form = document.getElementById('classForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const classData = {
+        course_id: parseInt(document.getElementById('classCourseId').value),
+        teacher_id: parseInt(document.getElementById('classTeacherId').value),
+        title: document.getElementById('classTitle').value,
+        description: document.getElementById('classDescription').value,
+        schedule: document.getElementById('classSchedule').value,
+        duration: parseInt(document.getElementById('classDuration').value),
+        room: document.getElementById('classRoom').value,
+        status: document.getElementById('classStatus').value
+    };
+    
+    const classId = document.getElementById('classId').value;
+    const isEdit = classId !== '';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const url = isEdit ? `/api/classes/${classId}` : '/api/classes';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(classData)
+        });
+        
+        if (response.ok) {
+            classModal.hide();
+            showAlert(isEdit ? 'Clase actualizada exitosamente' : 'Clase creada exitosamente', 'success');
+            loadClasses();
+            updateStats();
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Error al guardar clase', 'danger');
+        }
+    } catch (error) {
+        console.error('Error saving class:', error);
+        showAlert('Error al guardar clase', 'danger');
+    }
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    setTimeout(() => {
+        const alert = mainContent.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

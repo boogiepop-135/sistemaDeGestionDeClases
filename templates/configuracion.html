@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-cog me-2 text-primary"></i>
+                Configuración del Sistema
+            </h1>
+            <p class="text-muted">Administra la configuración general del CRM</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Settings -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Perfil de Usuario
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label for="profileName" class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" id="profileName" value="">
+                        </div>
+                        <div class="mb-3">
+                            <label for="profileEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="profileEmail" value="" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profileRole" class="form-label">Rol</label>
+                            <input type="text" class="form-control" id="profileRole" value="" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Actualizar Perfil
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Change -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lock me-2"></i>
+                        Cambiar Contraseña
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="passwordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Contraseña Actual</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-key me-2"></i>
+                            Cambiar Contraseña
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- System Settings -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Configuración del Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="systemForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="institutionName" class="form-label">Nombre de la Institución</label>
+                                <input type="text" class="form-control" id="institutionName" value="CRM Educativo">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="institutionEmail" class="form-label">Email de Contacto</label>
+                                <input type="email" class="form-control" id="institutionEmail" value="contacto@crm.edu">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="defaultCurrency" class="form-label">Moneda por Defecto</label>
+                                <select class="form-select" id="defaultCurrency">
+                                    <option value="USD">USD - Dólar Estadounidense</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="MXN">MXN - Peso Mexicano</option>
+                                    <option value="ARS">ARS - Peso Argentino</option>
+                                    <option value="CLP">CLP - Peso Chileno</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="timezone" class="form-label">Zona Horaria</label>
+                                <select class="form-select" id="timezone">
+                                    <option value="America/Mexico_City">México (GMT-6)</option>
+                                    <option value="America/New_York">Nueva York (GMT-5)</option>
+                                    <option value="America/Los_Angeles">Los Ángeles (GMT-8)</option>
+                                    <option value="Europe/Madrid">Madrid (GMT+1)</option>
+                                    <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="maxStudentsPerClass" class="form-label">Máximo Estudiantes por Clase</label>
+                                <input type="number" class="form-control" id="maxStudentsPerClass" value="20" min="1" max="100">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sessionTimeout" class="form-label">Tiempo de Sesión (minutos)</label>
+                                <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="480">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="systemDescription" class="form-label">Descripción del Sistema</label>
+                            <textarea class="form-control" id="systemDescription" rows="3" placeholder="Descripción de la institución educativa..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Guardar Configuración
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Acciones Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="backupData()">
+                            <i class="fas fa-download me-2"></i>
+                            Respaldar Datos
+                        </button>
+                        <button class="btn btn-outline-success" onclick="restoreData()">
+                            <i class="fas fa-upload me-2"></i>
+                            Restaurar Datos
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="clearCache()">
+                            <i class="fas fa-broom me-2"></i>
+                            Limpiar Caché
+                        </button>
+                        <button class="btn btn-outline-info" onclick="exportSettings()">
+                            <i class="fas fa-file-export me-2"></i>
+                            Exportar Configuración
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="showSystemInfo()">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Información del Sistema
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-heartbeat me-2"></i>
+                        Estado del Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Base de Datos:</span>
+                        <span class="badge badge-success">Conectado</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Servidor:</span>
+                        <span class="badge badge-success">Activo</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Memoria:</span>
+                        <span class="badge badge-warning">75%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Espacio en Disco:</span>
+                        <span class="badge badge-success">45%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Settings -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>
+                        Configuración de Notificaciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Notificaciones por Email</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="emailPayments" checked>
+                                <label class="form-check-label" for="emailPayments">
+                                    Recordatorios de pagos
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="emailAttendance" checked>
+                                <label class="form-check-label" for="emailAttendance">
+                                    Reportes de asistencia
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="emailGrades">
+                                <label class="form-check-label" for="emailGrades">
+                                    Calificaciones publicadas
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="emailSystem" checked>
+                                <label class="form-check-label" for="emailSystem">
+                                    Alertas del sistema
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Notificaciones en la Aplicación</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="appPayments" checked>
+                                <label class="form-check-label" for="appPayments">
+                                    Nuevos pagos registrados
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="appStudents" checked>
+                                <label class="form-check-label" for="appStudents">
+                                    Nuevos estudiantes
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="appClasses">
+                                <label class="form-check-label" for="appClasses">
+                                    Clases programadas
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="appReports" checked>
+                                <label class="form-check-label" for="appReports">
+                                    Reportes disponibles
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <button class="btn btn-primary" onclick="saveNotificationSettings()">
+                        <i class="fas fa-save me-2"></i>
+                        Guardar Configuración de Notificaciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Info Modal -->
+<div class="modal fade" id="systemInfoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Información del Sistema
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información del Software</h6>
+                        <p><strong>Versión:</strong> 1.0.0</p>
+                        <p><strong>Framework:</strong> Flask 2.3.3</p>
+                        <p><strong>Base de Datos:</strong> SQLite</p>
+                        <p><strong>Frontend:</strong> Bootstrap 5</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Información del Servidor</h6>
+                        <p><strong>Python:</strong> 3.11.5</p>
+                        <p><strong>Servidor:</strong> Gunicorn</p>
+                        <p><strong>Puerto:</strong> 5000</p>
+                        <p><strong>Entorno:</strong> Desarrollo</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Estadísticas del Sistema</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 id="totalStudentsCount">0</h4>
+                                    <small class="text-muted">Estudiantes</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 id="totalCoursesCount">0</h4>
+                                    <small class="text-muted">Cursos</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 id="totalPaymentsCount">0</h4>
+                                    <small class="text-muted">Pagos</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 id="totalUsersCount">0</h4>
+                                    <small class="text-muted">Usuarios</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let systemInfoModal;
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    systemInfoModal = new bootstrap.Modal(document.getElementById('systemInfoModal'));
+    
+    loadUserProfile();
+    loadSystemSettings();
+    loadNotificationSettings();
+});
+
+// Cargar perfil del usuario
+async function loadUserProfile() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/auth/profile', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('profileName').value = user.name;
+            document.getElementById('profileEmail').value = user.email;
+            document.getElementById('profileRole').value = user.role;
+        }
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+    }
+}
+
+// Cargar configuración del sistema
+function loadSystemSettings() {
+    // En una implementación real, esto vendría de la base de datos
+    document.getElementById('institutionName').value = localStorage.getItem('institutionName') || 'CRM Educativo';
+    document.getElementById('institutionEmail').value = localStorage.getItem('institutionEmail') || 'contacto@crm.edu';
+    document.getElementById('defaultCurrency').value = localStorage.getItem('defaultCurrency') || 'USD';
+    document.getElementById('timezone').value = localStorage.getItem('timezone') || 'America/Mexico_City';
+    document.getElementById('maxStudentsPerClass').value = localStorage.getItem('maxStudentsPerClass') || '20';
+    document.getElementById('sessionTimeout').value = localStorage.getItem('sessionTimeout') || '30';
+    document.getElementById('systemDescription').value = localStorage.getItem('systemDescription') || '';
+}
+
+// Cargar configuración de notificaciones
+function loadNotificationSettings() {
+    // En una implementación real, esto vendría de la base de datos
+    document.getElementById('emailPayments').checked = localStorage.getItem('emailPayments') !== 'false';
+    document.getElementById('emailAttendance').checked = localStorage.getItem('emailAttendance') !== 'false';
+    document.getElementById('emailGrades').checked = localStorage.getItem('emailGrades') === 'true';
+    document.getElementById('emailSystem').checked = localStorage.getItem('emailSystem') !== 'false';
+    
+    document.getElementById('appPayments').checked = localStorage.getItem('appPayments') !== 'false';
+    document.getElementById('appStudents').checked = localStorage.getItem('appStudents') !== 'false';
+    document.getElementById('appClasses').checked = localStorage.getItem('appClasses') === 'true';
+    document.getElementById('appReports').checked = localStorage.getItem('appReports') !== 'false';
+}
+
+// Actualizar perfil
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const profileData = {
+        name: document.getElementById('profileName').value
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/auth/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(profileData)
+        });
+        
+        if (response.ok) {
+            showAlert('Perfil actualizado exitosamente', 'success');
+            // Actualizar nombre en el navbar
+            document.getElementById('userName').textContent = profileData.name;
+        } else {
+            showAlert('Error al actualizar perfil', 'danger');
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showAlert('Error al actualizar perfil', 'danger');
+    }
+});
+
+// Cambiar contraseña
+document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (newPassword !== confirmPassword) {
+        showAlert('Las contraseñas no coinciden', 'danger');
+        return;
+    }
+    
+    const passwordData = {
+        current_password: document.getElementById('currentPassword').value,
+        new_password: newPassword
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(passwordData)
+        });
+        
+        if (response.ok) {
+            showAlert('Contraseña cambiada exitosamente', 'success');
+            document.getElementById('passwordForm').reset();
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Error al cambiar contraseña', 'danger');
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showAlert('Error al cambiar contraseña', 'danger');
+    }
+});
+
+// Guardar configuración del sistema
+document.getElementById('systemForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Guardar en localStorage (en producción sería en la base de datos)
+    localStorage.setItem('institutionName', document.getElementById('institutionName').value);
+    localStorage.setItem('institutionEmail', document.getElementById('institutionEmail').value);
+    localStorage.setItem('defaultCurrency', document.getElementById('defaultCurrency').value);
+    localStorage.setItem('timezone', document.getElementById('timezone').value);
+    localStorage.setItem('maxStudentsPerClass', document.getElementById('maxStudentsPerClass').value);
+    localStorage.setItem('sessionTimeout', document.getElementById('sessionTimeout').value);
+    localStorage.setItem('systemDescription', document.getElementById('systemDescription').value);
+    
+    showAlert('Configuración guardada exitosamente', 'success');
+});
+
+// Guardar configuración de notificaciones
+function saveNotificationSettings() {
+    localStorage.setItem('emailPayments', document.getElementById('emailPayments').checked);
+    localStorage.setItem('emailAttendance', document.getElementById('emailAttendance').checked);
+    localStorage.setItem('emailGrades', document.getElementById('emailGrades').checked);
+    localStorage.setItem('emailSystem', document.getElementById('emailSystem').checked);
+    
+    localStorage.setItem('appPayments', document.getElementById('appPayments').checked);
+    localStorage.setItem('appStudents', document.getElementById('appStudents').checked);
+    localStorage.setItem('appClasses', document.getElementById('appClasses').checked);
+    localStorage.setItem('appReports', document.getElementById('appReports').checked);
+    
+    showAlert('Configuración de notificaciones guardada', 'success');
+}
+
+// Acciones rápidas
+function backupData() {
+    showAlert('Función de respaldo en desarrollo', 'info');
+}
+
+function restoreData() {
+    showAlert('Función de restauración en desarrollo', 'info');
+}
+
+function clearCache() {
+    localStorage.clear();
+    showAlert('Caché limpiado exitosamente', 'success');
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+function exportSettings() {
+    const settings = {
+        institutionName: document.getElementById('institutionName').value,
+        institutionEmail: document.getElementById('institutionEmail').value,
+        defaultCurrency: document.getElementById('defaultCurrency').value,
+        timezone: document.getElementById('timezone').value,
+        maxStudentsPerClass: document.getElementById('maxStudentsPerClass').value,
+        sessionTimeout: document.getElementById('sessionTimeout').value,
+        systemDescription: document.getElementById('systemDescription').value
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "configuracion_sistema.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    showAlert('Configuración exportada exitosamente', 'success');
+}
+
+async function showSystemInfo() {
+    try {
+        const token = localStorage.getItem('token');
+        const [studentsRes, coursesRes, paymentsRes, usersRes] = await Promise.all([
+            fetch('/api/students', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/courses', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/payments', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        
+        if (studentsRes.ok) {
+            const students = await studentsRes.json();
+            document.getElementById('totalStudentsCount').textContent = students.length;
+        }
+        
+        if (coursesRes.ok) {
+            const courses = await coursesRes.json();
+            document.getElementById('totalCoursesCount').textContent = courses.length;
+        }
+        
+        if (paymentsRes.ok) {
+            const payments = await paymentsRes.json();
+            document.getElementById('totalPaymentsCount').textContent = payments.length;
+        }
+        
+        if (usersRes.ok) {
+            const users = await usersRes.json();
+            document.getElementById('totalUsersCount').textContent = users.length;
+        }
+        
+        systemInfoModal.show();
+    } catch (error) {
+        console.error('Error loading system info:', error);
+        showAlert('Error al cargar información del sistema', 'danger');
+    }
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    setTimeout(() => {
+        const alert = mainContent.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

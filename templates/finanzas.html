@@ -1,0 +1,677 @@
+{% extends "base.html" %}
+
+{% block title %}Finanzas - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-dollar-sign me-2 text-primary"></i>
+                Gestión Financiera
+            </h1>
+            <p class="text-muted">Administra pagos, cobros y reportes financieros</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreatePaymentModal()">
+            <i class="fas fa-plus me-2"></i>
+            Nuevo Pago
+        </button>
+    </div>
+
+    <!-- Financial Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Ingresos del Mes</h6>
+                            <h3 id="monthlyIncome">$0</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-arrow-up fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Pagos Pendientes</h6>
+                            <h3 id="pendingPayments">$0</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-clock fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Pagos</h6>
+                            <h3 id="totalPayments">0</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-receipt fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Promedio por Pago</h6>
+                            <h3 id="avgPayment">$0</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-chart-line fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Ingresos por Mes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="incomeChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Pagos por Tipo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentTypeChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Registro de Pagos
+                </h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="statusFilter" style="width: auto;">
+                        <option value="">Todos los estados</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="exportPayments()">
+                        <i class="fas fa-download me-1"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Estudiante</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Cargando pagos...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalTitle">
+                    <i class="fas fa-plus me-2"></i>
+                    Nuevo Pago
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="paymentId">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentStudentId" class="form-label">Estudiante *</label>
+                            <select class="form-select" id="paymentStudentId" required>
+                                <option value="">Seleccionar estudiante...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentAmount" class="form-label">Monto *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="paymentAmount" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentType" class="form-label">Tipo de Pago *</label>
+                            <select class="form-select" id="paymentType" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="matricula">Matrícula</option>
+                                <option value="mensualidad">Mensualidad</option>
+                                <option value="material">Material</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentMethod" class="form-label">Método de Pago</label>
+                            <select class="form-select" id="paymentMethod">
+                                <option value="">Seleccionar método...</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentDate" class="form-label">Fecha *</label>
+                            <input type="datetime-local" class="form-control" id="paymentDate" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentStatus" class="form-label">Estado</label>
+                            <select class="form-select" id="paymentStatus">
+                                <option value="pagado">Pagado</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="paymentDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentReference" class="form-label">Referencia</label>
+                        <input type="text" class="form-control" id="paymentReference" placeholder="Número de referencia o comprobante">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="savePayment()">
+                    <i class="fas fa-save me-2"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let payments = [];
+let students = [];
+let paymentModal;
+let incomeChart, paymentTypeChart;
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    
+    loadPayments();
+    loadStudents();
+    updateStats();
+    
+    // Event listeners
+    document.getElementById('statusFilter').addEventListener('change', filterPayments);
+    
+    // Establecer fecha actual por defecto
+    document.getElementById('paymentDate').value = new Date().toISOString().slice(0, 16);
+});
+
+// Cargar pagos
+async function loadPayments() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/payments', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            payments = await response.json();
+            displayPayments(payments);
+            updateStats();
+            createCharts();
+        }
+    } catch (error) {
+        console.error('Error loading payments:', error);
+        showAlert('Error al cargar pagos', 'danger');
+    }
+}
+
+// Cargar estudiantes
+async function loadStudents() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/students', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            students = await response.json();
+            populateStudentSelect();
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+    }
+}
+
+// Mostrar pagos
+function displayPayments(paymentsToShow) {
+    const tbody = document.getElementById('paymentsTableBody');
+    
+    if (paymentsToShow.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">No se encontraron pagos</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const rows = paymentsToShow.map(payment => {
+        const student = students.find(s => s.id === payment.student_id);
+        const statusBadge = getPaymentStatusBadge(payment.status);
+        const typeBadge = getPaymentTypeBadge(payment.type);
+        const date = new Date(payment.date);
+        
+        return `
+            <tr>
+                <td>${payment.id}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded me-2">
+                            <i class="fas fa-user text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${student ? student.name : 'Estudiante no encontrado'}</div>
+                            <small class="text-muted">ID: ${payment.student_id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>${typeBadge}</td>
+                <td>
+                    <span class="fw-bold text-success">$${payment.amount.toLocaleString()}</span>
+                </td>
+                <td>
+                    <div>${date.toLocaleDateString()}</div>
+                    <small class="text-muted">${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                </td>
+                <td>${payment.payment_method || '-'}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="viewPayment(${payment.id})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="editPayment(${payment.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deletePayment(${payment.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Obtener badge de estado de pago
+function getPaymentStatusBadge(status) {
+    const badges = {
+        'pagado': '<span class="badge badge-success">Pagado</span>',
+        'pendiente': '<span class="badge badge-warning">Pendiente</span>',
+        'cancelado': '<span class="badge badge-danger">Cancelado</span>'
+    };
+    return badges[status] || '<span class="badge badge-secondary">Desconocido</span>';
+}
+
+// Obtener badge de tipo de pago
+function getPaymentTypeBadge(type) {
+    const badges = {
+        'matricula': '<span class="badge badge-primary">Matrícula</span>',
+        'mensualidad': '<span class="badge badge-info">Mensualidad</span>',
+        'material': '<span class="badge badge-secondary">Material</span>',
+        'otro': '<span class="badge badge-dark">Otro</span>'
+    };
+    return badges[type] || '<span class="badge badge-secondary">Desconocido</span>';
+}
+
+// Poblar select de estudiantes
+function populateStudentSelect() {
+    const studentSelect = document.getElementById('paymentStudentId');
+    studentSelect.innerHTML = '<option value="">Seleccionar estudiante...</option>';
+    
+    students.forEach(student => {
+        const option = document.createElement('option');
+        option.value = student.id;
+        option.textContent = student.name;
+        studentSelect.appendChild(option);
+    });
+}
+
+// Actualizar estadísticas
+function updateStats() {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    // Ingresos del mes
+    const monthlyPayments = payments.filter(p => {
+        const paymentDate = new Date(p.date);
+        return paymentDate.getMonth() === currentMonth && 
+               paymentDate.getFullYear() === currentYear &&
+               p.status === 'pagado';
+    });
+    const monthlyIncome = monthlyPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    // Pagos pendientes
+    const pendingPayments = payments.filter(p => p.status === 'pendiente');
+    const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    // Promedio por pago
+    const paidPayments = payments.filter(p => p.status === 'pagado');
+    const avgPayment = paidPayments.length > 0 ? paidPayments.reduce((sum, p) => sum + p.amount, 0) / paidPayments.length : 0;
+    
+    document.getElementById('monthlyIncome').textContent = `$${monthlyIncome.toLocaleString()}`;
+    document.getElementById('pendingPayments').textContent = `$${pendingAmount.toLocaleString()}`;
+    document.getElementById('totalPayments').textContent = payments.length;
+    document.getElementById('avgPayment').textContent = `$${avgPayment.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+}
+
+// Crear gráficos
+function createCharts() {
+    createIncomeChart();
+    createPaymentTypeChart();
+}
+
+// Gráfico de ingresos
+function createIncomeChart() {
+    const ctx = document.getElementById('incomeChart').getContext('2d');
+    
+    // Agrupar pagos por mes
+    const monthlyData = {};
+    payments.filter(p => p.status === 'pagado').forEach(payment => {
+        const date = new Date(payment.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + payment.amount;
+    });
+    
+    const months = Object.keys(monthlyData).sort();
+    const income = months.map(month => monthlyData[month]);
+    
+    if (incomeChart) {
+        incomeChart.destroy();
+    }
+    
+    incomeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months.map(month => {
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+            }),
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: income,
+                borderColor: '#1e3a8a',
+                backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Gráfico de tipos de pago
+function createPaymentTypeChart() {
+    const ctx = document.getElementById('paymentTypeChart').getContext('2d');
+    
+    // Agrupar pagos por tipo
+    const typeData = {};
+    payments.filter(p => p.status === 'pagado').forEach(payment => {
+        typeData[payment.type] = (typeData[payment.type] || 0) + payment.amount;
+    });
+    
+    const types = Object.keys(typeData);
+    const amounts = types.map(type => typeData[type]);
+    
+    if (paymentTypeChart) {
+        paymentTypeChart.destroy();
+    }
+    
+    paymentTypeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: types.map(type => {
+                const labels = {
+                    'matricula': 'Matrícula',
+                    'mensualidad': 'Mensualidad',
+                    'material': 'Material',
+                    'otro': 'Otro'
+                };
+                return labels[type] || type;
+            }),
+            datasets: [{
+                data: amounts,
+                backgroundColor: [
+                    '#1e3a8a',
+                    '#059669',
+                    '#eab308',
+                    '#dc2626'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Filtrar pagos
+function filterPayments() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    let filtered = payments;
+    if (statusFilter) {
+        filtered = payments.filter(payment => payment.status === statusFilter);
+    }
+    
+    displayPayments(filtered);
+}
+
+// Abrir modal de creación de pago
+function openCreatePaymentModal() {
+    document.getElementById('paymentModalTitle').innerHTML = '<i class="fas fa-plus me-2"></i>Nuevo Pago';
+    document.getElementById('paymentForm').reset();
+    document.getElementById('paymentId').value = '';
+    document.getElementById('paymentDate').value = new Date().toISOString().slice(0, 16);
+    paymentModal.show();
+}
+
+// Guardar pago
+async function savePayment() {
+    const form = document.getElementById('paymentForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const paymentData = {
+        student_id: parseInt(document.getElementById('paymentStudentId').value),
+        amount: parseFloat(document.getElementById('paymentAmount').value),
+        type: document.getElementById('paymentType').value,
+        description: document.getElementById('paymentDescription').value,
+        status: document.getElementById('paymentStatus').value,
+        payment_method: document.getElementById('paymentMethod').value,
+        reference: document.getElementById('paymentReference').value
+    };
+    
+    const paymentId = document.getElementById('paymentId').value;
+    const isEdit = paymentId !== '';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const url = isEdit ? `/api/payments/${paymentId}` : '/api/payments';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(paymentData)
+        });
+        
+        if (response.ok) {
+            paymentModal.hide();
+            showAlert(isEdit ? 'Pago actualizado exitosamente' : 'Pago registrado exitosamente', 'success');
+            loadPayments();
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Error al guardar pago', 'danger');
+        }
+    } catch (error) {
+        console.error('Error saving payment:', error);
+        showAlert('Error al guardar pago', 'danger');
+    }
+}
+
+// Exportar pagos
+function exportPayments() {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Estudiante,Tipo,Monto,Fecha,Método,Estado,Descripción\n"
+        + payments.map(payment => {
+            const student = students.find(s => s.id === payment.student_id);
+            const date = new Date(payment.date);
+            return `${payment.id},"${student ? student.name : 'N/A}","${payment.type}","${payment.amount}","${date.toLocaleDateString()}","${payment.payment_method || ''}","${payment.status}","${payment.description || ''}"`;
+        }).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "pagos.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    setTimeout(() => {
+        const alert = mainContent.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

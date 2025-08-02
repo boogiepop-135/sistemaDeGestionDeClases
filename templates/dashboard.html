@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                Dashboard
+            </h1>
+            <p class="text-muted">Resumen general del sistema educativo</p>
+        </div>
+        <div class="text-end">
+            <p class="mb-0 text-muted">Última actualización</p>
+            <small id="lastUpdate"></small>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Estudiantes Activos</h6>
+                            <h3 class="mb-0" id="totalStudents">0</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Cursos Activos</h6>
+                            <h3 class="mb-0" id="totalCourses">0</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-book fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Clases Programadas</h6>
+                            <h3 class="mb-0" id="totalClasses">0</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-calendar fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Ingresos del Mes</h6>
+                            <h3 class="mb-0" id="monthlyIncome">$0</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-dollar-sign fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Ingresos Mensuales
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="incomeChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Asistencia Promedio
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="attendanceChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities & Upcoming Classes -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Actividades Recientes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivities">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                            <p class="mt-2 text-muted">Cargando actividades...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Próximas Clases
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="upcomingClasses">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                            <p class="mt-2 text-muted">Cargando clases...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let incomeChart, attendanceChart;
+
+// Cargar datos del dashboard
+async function loadDashboardData() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/dashboard/stats', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateStats(data);
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+// Actualizar estadísticas
+function updateStats(data) {
+    document.getElementById('totalStudents').textContent = data.total_students;
+    document.getElementById('totalCourses').textContent = data.total_courses;
+    document.getElementById('totalClasses').textContent = data.total_classes;
+    document.getElementById('monthlyIncome').textContent = `$${data.monthly_income.toLocaleString()}`;
+    
+    // Actualizar última actualización
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+}
+
+// Cargar actividades recientes
+async function loadRecentActivities() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/dashboard/recent-activities', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const activities = await response.json();
+            displayRecentActivities(activities);
+        }
+    } catch (error) {
+        console.error('Error loading recent activities:', error);
+    }
+}
+
+// Mostrar actividades recientes
+function displayRecentActivities(activities) {
+    const container = document.getElementById('recentActivities');
+    
+    if (activities.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-2x text-muted"></i>
+                <p class="mt-2 text-muted">No hay actividades recientes</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const activitiesHtml = activities.map(activity => {
+        const icon = activity.type === 'enrollment' ? 'user-plus' : 'dollar-sign';
+        const color = activity.type === 'enrollment' ? 'success' : 'info';
+        const date = new Date(activity.date).toLocaleDateString();
+        
+        return `
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-${color} bg-opacity-10 p-2 rounded me-3">
+                    <i class="fas fa-${icon} text-${color}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <p class="mb-0 small">${activity.message}</p>
+                    <small class="text-muted">${date}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = activitiesHtml;
+}
+
+// Cargar próximas clases
+async function loadUpcomingClasses() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/classes', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const classes = await response.json();
+            const upcoming = classes
+                .filter(cls => new Date(cls.schedule) > new Date())
+                .sort((a, b) => new Date(a.schedule) - new Date(b.schedule))
+                .slice(0, 5);
+            
+            displayUpcomingClasses(upcoming);
+        }
+    } catch (error) {
+        console.error('Error loading upcoming classes:', error);
+    }
+}
+
+// Mostrar próximas clases
+function displayUpcomingClasses(classes) {
+    const container = document.getElementById('upcomingClasses');
+    
+    if (classes.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-2x text-muted"></i>
+                <p class="mt-2 text-muted">No hay clases programadas</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const classesHtml = classes.map(cls => {
+        const date = new Date(cls.schedule);
+        const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const day = date.toLocaleDateString();
+        
+        return `
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                    <i class="fas fa-clock text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <p class="mb-0 small fw-bold">${cls.title}</p>
+                    <small class="text-muted">${day} - ${time}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = classesHtml;
+}
+
+// Crear gráfico de ingresos
+function createIncomeChart() {
+    const ctx = document.getElementById('incomeChart').getContext('2d');
+    
+    // Datos de ejemplo - en producción vendrían de la API
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+    const income = [12000, 15000, 18000, 14000, 22000, 25000];
+    
+    incomeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: income,
+                borderColor: '#1e3a8a',
+                backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Crear gráfico de asistencia
+function createAttendanceChart() {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    
+    attendanceChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Presente', 'Ausente', 'Justificado'],
+            datasets: [{
+                data: [85, 10, 5],
+                backgroundColor: [
+                    '#059669',
+                    '#dc2626',
+                    '#eab308'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Inicializar dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    loadRecentActivities();
+    loadUpcomingClasses();
+    
+    // Crear gráficos
+    setTimeout(() => {
+        createIncomeChart();
+        createAttendanceChart();
+    }, 1000);
+    
+    // Actualizar datos cada 5 minutos
+    setInterval(() => {
+        loadDashboardData();
+        loadRecentActivities();
+        loadUpcomingClasses();
+    }, 300000);
+});
+</script>
+{% endblock %} 
