@@ -11,6 +11,12 @@ import json
 def register():
     data = request.get_json()
     
+    # Validar campos requeridos
+    required_fields = ['email', 'password', 'name']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({'error': f'El campo {field} es requerido'}), 400
+    
     # Verificar si el usuario ya existe
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'El email ya está registrado'}), 400
@@ -45,13 +51,17 @@ def register():
 def login():
     data = request.get_json()
     
+    # Validar campos requeridos
+    if not data or 'email' not in data or 'password' not in data:
+        return jsonify({'error': 'Email y contraseña son requeridos'}), 400
+    
     user = User.query.filter_by(email=data['email']).first()
     
     if user and bcrypt.check_password_hash(user.password_hash, data['password']):
         access_token = create_access_token(identity=user.id)
         return jsonify({
             'message': 'Login exitoso',
-            'access_token': access_token,
+            'token': access_token,
             'user': {
                 'id': user.id,
                 'email': user.email,
