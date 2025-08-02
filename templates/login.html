@@ -220,6 +220,10 @@
                 
                 const data = await response.json();
                 
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                console.log('Response data:', data);
+                
                 if (response.ok) {
                     // Debug: mostrar datos de respuesta
                     console.log('Respuesta del servidor:', data);
@@ -250,6 +254,7 @@
                     }, 1500);
                 } else {
                     console.error('Error en login:', data);
+                    console.error('Status code:', response.status);
                     showAlert(data.error || 'Error al iniciar sesión', 'danger');
                 }
             } catch (error) {

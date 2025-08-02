@@ -55,6 +55,7 @@ def login():
         
         # Validar campos requeridos
         if not data or 'email' not in data or 'password' not in data:
+            print("Missing required fields")
             return jsonify({'error': 'Email y contraseña son requeridos'}), 400
         
         user = User.query.filter_by(email=data['email']).first()
@@ -63,6 +64,7 @@ def login():
         if user and bcrypt.check_password_hash(user.password_hash, data['password']):
             # Verificar que el usuario esté activo
             if hasattr(user, 'is_active') and not user.is_active:
+                print("User is inactive")
                 return jsonify({'error': 'Usuario inactivo'}), 401
                 
             access_token = create_access_token(identity=user.id)
@@ -79,7 +81,8 @@ def login():
                 }
             }
             print(f"Login successful for user: {user.name}")
-            return jsonify(response_data)
+            print(f"Returning response with status 200")
+            return jsonify(response_data), 200
         
         print("Invalid credentials")
         return jsonify({'error': 'Credenciales inválidas'}), 401
@@ -160,12 +163,17 @@ def server_status():
 def verify_token():
     """Verificar si el token es válido y obtener información del usuario"""
     try:
+        print("Verifying token...")
         user_id = get_jwt_identity()
+        print(f"User ID from token: {user_id}")
         user = User.query.get(user_id)
+        print(f"User found: {user is not None}")
         
         if not user:
+            print("User not found in database")
             return jsonify({'error': 'Usuario no encontrado'}), 404
             
+        print(f"Token verification successful for user: {user.name}")
         return jsonify({
             'valid': True,
             'user': {
@@ -176,6 +184,7 @@ def verify_token():
             }
         })
     except Exception as e:
+        print(f"Error in token verification: {e}")
         return jsonify({'error': 'Token inválido'}), 401
 
 # ==================== USUARIOS ====================
