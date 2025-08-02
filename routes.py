@@ -82,7 +82,10 @@ def login():
             }
             print(f"Login successful for user: {user.name}")
             print(f"Returning response with status 200")
-            return jsonify(response_data), 200
+            response = jsonify(response_data)
+            response.headers.add('Access-Control-Allow-Origin', 'https://web-production-668e6.up.railway.app')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            return response, 200
         
         print("Invalid credentials")
         return jsonify({'error': 'Credenciales inválidas'}), 401
@@ -119,12 +122,15 @@ def get_profile():
 @app.route('/api/test', methods=['GET'])
 def test_api():
     """Endpoint de prueba para verificar que la API esté funcionando"""
-    return jsonify({
+    response = jsonify({
         'message': 'API funcionando correctamente',
         'timestamp': datetime.now().isoformat(),
         'status': 'ok',
         'version': '1.0.0'
     })
+    response.headers.add('Access-Control-Allow-Origin', 'https://web-production-668e6.up.railway.app')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

@@ -36,7 +36,7 @@ db.init_app(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
-CORS(app, origins=['*'], supports_credentials=True)
+CORS(app, origins=['https://web-production-668e6.up.railway.app', 'http://localhost:5000', 'http://127.0.0.1:5000'], supports_credentials=True)
 
 # Configurar manejo de errores JWT
 @jwt.expired_token_loader
