@@ -535,12 +535,15 @@ async function checkAuth() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
-    console.log('Verificando autenticación...');
-    console.log('Token existe:', !!token);
-    console.log('Usuario existe:', !!user);
+    console.log('=== DEBUGGING AUTH ===');
+    console.log('Token from localStorage:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
+    console.log('User from localStorage:', user);
+    console.log('Token length:', token ? token.length : 0);
     
     if (!token || !user) {
         console.log('No hay token o usuario, redirigiendo a login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = '/login';
         return false;
     }
@@ -551,7 +554,7 @@ async function checkAuth() {
         
         // Verificar que el token no esté vacío
         if (token === 'undefined' || token === 'null' || token === '') {
-            console.error('Token inválido');
+            console.error('Token inválido (vacío)');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
@@ -560,6 +563,9 @@ async function checkAuth() {
         
         // Verificar token con el servidor
         try {
+            console.log('Enviando request a /api/auth/verify...');
+            console.log('Token a enviar:', token.substring(0, 50) + '...');
+            
             const response = await fetch('/api/auth/verify', {
                 method: 'GET',
                 headers: {
@@ -568,12 +574,19 @@ async function checkAuth() {
                 }
             });
             
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+            
             if (response.ok) {
                 const data = await response.json();
                 console.log('Token válido:', data);
                 return true;
             } else {
-                console.error('Token inválido o expirado');
+                const errorData = await response.json();
+                console.error('Token inválido o expirado:', errorData);
+                console.error('Response status:', response.status);
+                console.error('Response statusText:', response.statusText);
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.href = '/login';
@@ -581,6 +594,8 @@ async function checkAuth() {
             }
         } catch (error) {
             console.error('Error al verificar token:', error);
+            console.error('Error type:', error.name);
+            console.error('Error message:', error.message);
             // Si hay error de red, asumir que el token es válido por ahora
             return true;
         }
