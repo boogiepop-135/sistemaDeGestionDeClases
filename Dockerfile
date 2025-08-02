@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Exponer puerto
-EXPOSE 5000
+EXPOSE 8080
 
 # Variables de entorno
 ENV FLASK_APP=app.py
@@ -27,4 +27,4 @@ ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 
 # Comando para ejecutar la aplicación
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"] 
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"] 
