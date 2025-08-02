@@ -424,6 +424,10 @@ function checkAuth() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
+    console.log('Verificando autenticación...');
+    console.log('Token existe:', !!token);
+    console.log('Usuario existe:', !!user);
+    
     if (!token || !user) {
         console.log('No hay token o usuario, redirigiendo a login');
         window.location.href = '/login';
@@ -432,7 +436,17 @@ function checkAuth() {
     
     try {
         const userData = JSON.parse(user);
-        console.log('Usuario autenticado:', userData.name);
+        console.log('Usuario autenticado:', userData.name, 'Rol:', userData.role);
+        
+        // Verificar que el token no esté vacío
+        if (token === 'undefined' || token === 'null' || token === '') {
+            console.error('Token inválido');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return false;
+        }
+        
         return true;
     } catch (error) {
         console.error('Error al parsear datos del usuario:', error);

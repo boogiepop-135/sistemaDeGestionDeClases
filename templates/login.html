@@ -22,8 +22,10 @@
             background: linear-gradient(135deg, var(--primary-blue), var(--secondary-green));
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
 
         .login-container {
@@ -33,6 +35,7 @@
             overflow: hidden;
             width: 100%;
             max-width: 400px;
+            z-index: 10;
         }
 
         .login-header {
@@ -123,9 +126,13 @@
         }
 
         .footer-text {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
-            margin-top: 30px;
             color: rgba(255, 255, 255, 0.8);
+            z-index: 5;
         }
 
         .footer-text strong {
@@ -230,10 +237,11 @@
                     // Mostrar mensaje de éxito
                     showAlert('¡Login exitoso! Redirigiendo...', 'success');
                     
-                    // Redirigir al dashboard
+                    // Redirigir al dashboard después de un breve delay
                     setTimeout(() => {
+                        console.log('Redirigiendo al dashboard...');
                         window.location.href = '/dashboard';
-                    }, 1000);
+                    }, 1500);
                 } else {
                     console.error('Error en login:', data);
                     showAlert(data.error || 'Error al iniciar sesión', 'danger');
@@ -262,8 +270,18 @@
         // Verificar si ya está logueado
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
-            if (token) {
-                window.location.href = '/dashboard';
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    console.log('Usuario ya logueado:', userData.name);
+                    window.location.href = '/dashboard';
+                } catch (error) {
+                    console.error('Error al parsear usuario:', error);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
             }
         });
     </script>
