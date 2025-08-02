@@ -122,15 +122,34 @@ def get_profile():
 @app.route('/api/test', methods=['GET'])
 def test_api():
     """Endpoint de prueba para verificar que la API esté funcionando"""
-    response = jsonify({
-        'message': 'API funcionando correctamente',
-        'timestamp': datetime.now().isoformat(),
-        'status': 'ok',
-        'version': '1.0.0'
-    })
-    response.headers.add('Access-Control-Allow-Origin', 'https://web-production-668e6.up.railway.app')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
+    try:
+        # Crear un token de prueba
+        test_token = create_access_token(identity=1)
+        print(f"Test token created: {test_token[:20]}...")
+        
+        response = jsonify({
+            'message': 'API funcionando correctamente',
+            'timestamp': datetime.now().isoformat(),
+            'status': 'ok',
+            'version': '1.0.0',
+            'test_token_created': True,
+            'jwt_secret_set': bool(app.config.get('JWT_SECRET_KEY')),
+            'jwt_secret_length': len(app.config.get('JWT_SECRET_KEY', ''))
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
+    except Exception as e:
+        print(f"Error in test_api: {e}")
+        response = jsonify({
+            'message': 'Error en API',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat(),
+            'status': 'error'
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response, 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -161,7 +180,9 @@ def server_status():
     response = jsonify({
         'status': 'online',
         'message': 'Servidor en línea',
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat(),
+        'jwt_secret_set': bool(app.config.get('JWT_SECRET_KEY')),
+        'jwt_secret_length': len(app.config.get('JWT_SECRET_KEY', ''))
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
@@ -173,6 +194,7 @@ def verify_token():
     """Verificar si el token es válido y obtener información del usuario"""
     try:
         print("Verifying token...")
+        print(f"JWT Secret Key: {app.config.get('JWT_SECRET_KEY', 'NOT SET')[:10]}...")
         user_id = get_jwt_identity()
         print(f"User ID from token: {user_id}")
         user = User.query.get(user_id)
@@ -197,6 +219,9 @@ def verify_token():
         return response
     except Exception as e:
         print(f"Error in token verification: {e}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         response = jsonify({'error': 'Token inválido'})
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
