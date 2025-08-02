@@ -27,15 +27,17 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 
+# Importar modelos primero
+from models import db
+
 # Inicializar extensiones
-db = SQLAlchemy(app)
+db.init_app(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 CORS(app)
 
-# Importar modelos y rutas después de inicializar db
-from models import *
+# Importar rutas después de inicializar db
 from routes import *
 
 # Crear tablas

@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
-from app import app, db, bcrypt, mail
-from models import *
+from app import app, bcrypt, mail
+from models import db, User, Student, Course, Class, Enrollment, Payment, Attendance, Grade, Notification
 from datetime import datetime, timedelta
 import json
 
