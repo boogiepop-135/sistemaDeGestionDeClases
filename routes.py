@@ -123,6 +123,38 @@ def test_api():
         'version': '1.0.0'
     })
 
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Endpoint de salud para verificar que el servidor esté funcionando"""
+    try:
+        # Verificar que la base de datos esté accesible
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'message': 'Servidor funcionando correctamente',
+            'timestamp': datetime.now().isoformat(),
+            'database': 'connected',
+            'server': 'running'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'message': 'Error en el servidor',
+            'timestamp': datetime.now().isoformat(),
+            'database': 'disconnected',
+            'server': 'running',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/status', methods=['GET'])
+def server_status():
+    """Endpoint simple para verificar que el servidor esté respondiendo"""
+    return jsonify({
+        'status': 'online',
+        'message': 'Servidor en línea',
+        'timestamp': datetime.now().isoformat()
+    })
+
 @app.route('/api/auth/verify', methods=['GET'])
 @jwt_required()
 def verify_token():

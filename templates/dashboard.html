@@ -598,7 +598,9 @@ async function checkAuth() {
 async function testApiConnection() {
     try {
         console.log('Probando conectividad de la API...');
-        const response = await fetch('/api/test', {
+        
+        // Intentar primero el endpoint de estado (más simple)
+        const statusResponse = await fetch('/api/status', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -606,18 +608,60 @@ async function testApiConnection() {
             }
         });
         
-        console.log('Respuesta de prueba:', response.status, response.statusText);
+        console.log('Respuesta de estado:', statusResponse.status, statusResponse.statusText);
         
-        if (response.ok) {
-            const data = await response.json();
-            console.log('API funcionando:', data);
+        if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            console.log('Servidor en línea:', statusData);
+            return true;
+        }
+        
+        // Si el endpoint de estado falla, intentar el endpoint de salud
+        const healthResponse = await fetch('/api/health', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        console.log('Respuesta de salud:', healthResponse.status, healthResponse.statusText);
+        
+        if (healthResponse.ok) {
+            const healthData = await healthResponse.json();
+            console.log('Servidor saludable:', healthData);
+            return true;
+        }
+        
+        // Si el endpoint de salud falla, intentar el endpoint de prueba
+        const testResponse = await fetch('/api/test', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        console.log('Respuesta de prueba:', testResponse.status, testResponse.statusText);
+        
+        if (testResponse.ok) {
+            const testData = await testResponse.json();
+            console.log('API funcionando:', testData);
             return true;
         } else {
-            console.error('API no responde correctamente:', response.status);
+            console.error('API no responde correctamente:', testResponse.status);
             return false;
         }
     } catch (error) {
         console.error('Error de conectividad con la API:', error);
+        console.error('Tipo de error:', error.name);
+        console.error('Mensaje de error:', error.message);
+        
+        // Mostrar información adicional sobre el error
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.error('Error de red: No se puede conectar al servidor');
+        }
+        
         return false;
     }
 }
