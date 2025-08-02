@@ -214,9 +214,18 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Debug: mostrar datos de respuesta
+                    console.log('Respuesta del servidor:', data);
+                    
                     // Guardar token y datos del usuario
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Verificar que se guardó correctamente
+                    const savedToken = localStorage.getItem('token');
+                    const savedUser = localStorage.getItem('user');
+                    console.log('Token guardado:', savedToken ? 'SÍ' : 'NO');
+                    console.log('Usuario guardado:', savedUser ? 'SÍ' : 'NO');
                     
                     // Mostrar mensaje de éxito
                     showAlert('¡Login exitoso! Redirigiendo...', 'success');
@@ -226,6 +235,7 @@
                         window.location.href = '/dashboard';
                     }, 1000);
                 } else {
+                    console.error('Error en login:', data);
                     showAlert(data.error || 'Error al iniciar sesión', 'danger');
                 }
             } catch (error) {

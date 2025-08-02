@@ -168,15 +168,31 @@ let incomeChart, attendanceChart;
 async function loadDashboardData() {
     try {
         const token = localStorage.getItem('token');
+        
+        // Verificar si el token existe
+        if (!token) {
+            console.error('No se encontró token de autenticación');
+            window.location.href = '/login';
+            return;
+        }
+        
         const response = await fetch('/api/dashboard/stats', {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
         if (response.ok) {
             const data = await response.json();
             updateStats(data);
+        } else if (response.status === 401) {
+            // Token inválido o expirado
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        } else {
+            console.error('Error loading dashboard data:', response.status);
         }
     } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -198,15 +214,26 @@ function updateStats(data) {
 async function loadRecentActivities() {
     try {
         const token = localStorage.getItem('token');
+        
+        if (!token) {
+            console.error('No se encontró token de autenticación');
+            return;
+        }
+        
         const response = await fetch('/api/dashboard/recent-activities', {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
         if (response.ok) {
             const activities = await response.json();
             displayRecentActivities(activities);
+        } else if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
         }
     } catch (error) {
         console.error('Error loading recent activities:', error);
@@ -252,9 +279,16 @@ function displayRecentActivities(activities) {
 async function loadUpcomingClasses() {
     try {
         const token = localStorage.getItem('token');
+        
+        if (!token) {
+            console.error('No se encontró token de autenticación');
+            return;
+        }
+        
         const response = await fetch('/api/classes', {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
@@ -266,6 +300,10 @@ async function loadUpcomingClasses() {
                 .slice(0, 5);
             
             displayUpcomingClasses(upcoming);
+        } else if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
         }
     } catch (error) {
         console.error('Error loading upcoming classes:', error);
@@ -381,8 +419,37 @@ function createAttendanceChart() {
     });
 }
 
+// Verificar autenticación
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (!token || !user) {
+        console.log('No hay token o usuario, redirigiendo a login');
+        window.location.href = '/login';
+        return false;
+    }
+    
+    try {
+        const userData = JSON.parse(user);
+        console.log('Usuario autenticado:', userData.name);
+        return true;
+    } catch (error) {
+        console.error('Error al parsear datos del usuario:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return false;
+    }
+}
+
 // Inicializar dashboard
 document.addEventListener('DOMContentLoaded', function() {
+    // Verificar autenticación antes de cargar datos
+    if (!checkAuth()) {
+        return;
+    }
+    
     loadDashboardData();
     loadRecentActivities();
     loadUpcomingClasses();
@@ -395,9 +462,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Actualizar datos cada 5 minutos
     setInterval(() => {
-        loadDashboardData();
-        loadRecentActivities();
-        loadUpcomingClasses();
+        if (checkAuth()) {
+            loadDashboardData();
+            loadRecentActivities();
+            loadUpcomingClasses();
+        }
     }, 300000);
 });
 </script>
