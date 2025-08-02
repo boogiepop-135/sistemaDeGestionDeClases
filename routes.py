@@ -158,11 +158,14 @@ def health_check():
 @app.route('/api/status', methods=['GET'])
 def server_status():
     """Endpoint simple para verificar que el servidor esté respondiendo"""
-    return jsonify({
+    response = jsonify({
         'status': 'online',
         'message': 'Servidor en línea',
         'timestamp': datetime.now().isoformat()
     })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 @app.route('/api/auth/verify', methods=['GET'])
 @jwt_required()
@@ -180,7 +183,7 @@ def verify_token():
             return jsonify({'error': 'Usuario no encontrado'}), 404
             
         print(f"Token verification successful for user: {user.name}")
-        return jsonify({
+        response = jsonify({
             'valid': True,
             'user': {
                 'id': user.id,
@@ -189,9 +192,15 @@ def verify_token():
                 'role': user.role
             }
         })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
     except Exception as e:
         print(f"Error in token verification: {e}")
-        return jsonify({'error': 'Token inválido'}), 401
+        response = jsonify({'error': 'Token inválido'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response, 401
 
 # ==================== USUARIOS ====================
 
