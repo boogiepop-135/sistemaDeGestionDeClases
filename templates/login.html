@@ -223,6 +223,8 @@
                 if (response.ok) {
                     // Debug: mostrar datos de respuesta
                     console.log('Respuesta del servidor:', data);
+                    console.log('Token recibido:', data.token ? 'SÍ' : 'NO');
+                    console.log('Usuario recibido:', data.user ? 'SÍ' : 'NO');
                     
                     // Guardar token y datos del usuario
                     localStorage.setItem('token', data.token);
@@ -232,7 +234,11 @@
                     const savedToken = localStorage.getItem('token');
                     const savedUser = localStorage.getItem('user');
                     console.log('Token guardado:', savedToken ? 'SÍ' : 'NO');
+                    console.log('Token valor:', savedToken ? savedToken.substring(0, 20) + '...' : 'NO');
                     console.log('Usuario guardado:', savedUser ? 'SÍ' : 'NO');
+                    
+                    // Probar el token inmediatamente
+                    testToken(savedToken);
                     
                     // Mostrar mensaje de éxito
                     showAlert('¡Login exitoso! Redirigiendo...', 'success');
@@ -265,6 +271,33 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             alertContainer.appendChild(alertDiv);
+        }
+        
+        // Función para probar el token inmediatamente después del login
+        async function testToken(token) {
+            try {
+                console.log('Probando token...');
+                const response = await fetch('/api/auth/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Respuesta de prueba de token:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    console.log('Token válido, usuario:', userData.name);
+                } else {
+                    console.error('Token inválido:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                }
+            } catch (error) {
+                console.error('Error al probar token:', error);
+            }
         }
         
         // Verificar si ya está logueado

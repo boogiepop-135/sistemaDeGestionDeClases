@@ -51,12 +51,14 @@ def register():
 def login():
     try:
         data = request.get_json()
+        print(f"Login attempt for email: {data.get('email') if data else 'No data'}")
         
         # Validar campos requeridos
         if not data or 'email' not in data or 'password' not in data:
             return jsonify({'error': 'Email y contraseña son requeridos'}), 400
         
         user = User.query.filter_by(email=data['email']).first()
+        print(f"User found: {user is not None}")
         
         if user and bcrypt.check_password_hash(user.password_hash, data['password']):
             # Verificar que el usuario esté activo
@@ -64,7 +66,9 @@ def login():
                 return jsonify({'error': 'Usuario inactivo'}), 401
                 
             access_token = create_access_token(identity=user.id)
-            return jsonify({
+            print(f"Token created for user {user.id}: {access_token[:20]}...")
+            
+            response_data = {
                 'message': 'Login exitoso',
                 'token': access_token,
                 'user': {
@@ -73,8 +77,11 @@ def login():
                     'name': user.name,
                     'role': user.role
                 }
-            })
+            }
+            print(f"Login successful for user: {user.name}")
+            return jsonify(response_data)
         
+        print("Invalid credentials")
         return jsonify({'error': 'Credenciales inválidas'}), 401
     except Exception as e:
         print(f"Error en login: {e}")
@@ -83,16 +90,28 @@ def login():
 @app.route('/api/auth/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    
-    return jsonify({
-        'id': user.id,
-        'email': user.email,
-        'name': user.name,
-        'role': user.role,
-        'created_at': user.created_at.isoformat()
-    })
+    try:
+        user_id = get_jwt_identity()
+        print(f"Profile request for user_id: {user_id}")
+        
+        user = User.query.get(user_id)
+        print(f"User found: {user is not None}")
+        
+        if not user:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        response_data = {
+            'id': user.id,
+            'email': user.email,
+            'name': user.name,
+            'role': user.role,
+            'created_at': user.created_at.isoformat()
+        }
+        print(f"Profile returned for user: {user.name}")
+        return jsonify(response_data)
+    except Exception as e:
+        print(f"Error in get_profile: {e}")
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/test', methods=['GET'])
 def test_api():
@@ -100,8 +119,32 @@ def test_api():
     return jsonify({
         'message': 'API funcionando correctamente',
         'timestamp': datetime.now().isoformat(),
-        'status': 'ok'
+        'status': 'ok',
+        'version': '1.0.0'
     })
+
+@app.route('/api/auth/verify', methods=['GET'])
+@jwt_required()
+def verify_token():
+    """Verificar si el token es válido y obtener información del usuario"""
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+            
+        return jsonify({
+            'valid': True,
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name,
+                'role': user.role
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': 'Token inválido'}), 401
 
 # ==================== USUARIOS ====================
 
