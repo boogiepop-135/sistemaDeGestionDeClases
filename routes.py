@@ -58,6 +58,10 @@ def login():
     user = User.query.filter_by(email=data['email']).first()
     
     if user and bcrypt.check_password_hash(user.password_hash, data['password']):
+        # Verificar que el usuario esté activo
+        if not user.is_active:
+            return jsonify({'error': 'Usuario inactivo'}), 401
+            
         access_token = create_access_token(identity=user.id)
         return jsonify({
             'message': 'Login exitoso',
