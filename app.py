@@ -44,6 +44,19 @@ from routes import *
 with app.app_context():
     db.create_all()
     
+    # Crear usuario superadmin por defecto si no existe
+    superadmin_user = User.query.filter_by(email='levi@crm.edu').first()
+    if not superadmin_user:
+        hashed_password = bcrypt.generate_password_hash('Leaguejinx1310-').decode('utf-8')
+        superadmin_user = User(
+            email='levi@crm.edu',
+            password_hash=hashed_password,
+            name='Levi Villarreal',
+            role='superadmin'
+        )
+        db.session.add(superadmin_user)
+        db.session.commit()
+    
     # Crear usuario admin por defecto si no existe
     admin_user = User.query.filter_by(email='admin@crm.edu').first()
     if not admin_user:
@@ -88,6 +101,10 @@ def reportes():
 @app.route('/configuracion')
 def configuracion():
     return render_template('configuracion.html')
+
+@app.route('/usuarios')
+def usuarios():
+    return render_template('usuarios.html')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 

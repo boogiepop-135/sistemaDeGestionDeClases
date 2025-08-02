@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - CRM Educativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users-cog me-2"></i>Gestión de Usuarios</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="fas fa-plus me-2"></i>Nuevo Usuario
+        </button>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-muted">Total Usuarios</h6>
+                            <h3 class="mb-0" id="totalUsers">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-muted">Superadmins</h6>
+                            <h3 class="mb-0" id="superadmins">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-crown fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-muted">Admins</h6>
+                            <h3 class="mb-0" id="admins">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-shield fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-muted">Profesores</h6>
+                            <h3 class="mb-0" id="profesores">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar usuarios...">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="roleFilter">
+                        <option value="">Todos los roles</option>
+                        <option value="superadmin">Superadmin</option>
+                        <option value="admin">Admin</option>
+                        <option value="profesor">Profesor</option>
+                        <option value="asistente">Asistente</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-1"></i>Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Usuarios -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Lista de Usuarios</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Usuario -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Crear Nuevo Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">Nombre Completo *</label>
+                        <input type="text" class="form-control" id="userName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="userEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPassword" class="form-label">Contraseña *</label>
+                        <input type="password" class="form-control" id="userPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userRole" class="form-label">Rol *</label>
+                        <select class="form-select" id="userRole" required>
+                            <option value="">Seleccionar rol</option>
+                            <option value="superadmin">Superadmin</option>
+                            <option value="admin">Admin</option>
+                            <option value="profesor">Profesor</option>
+                            <option value="asistente">Asistente</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="createUser()">
+                    <i class="fas fa-save me-2"></i>Crear Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Editar Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label for="editUserName" class="form-label">Nombre Completo *</label>
+                        <input type="text" class="form-control" id="editUserName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="editUserEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserPassword" class="form-label">Nueva Contraseña (dejar vacío para no cambiar)</label>
+                        <input type="password" class="form-control" id="editUserPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserRole" class="form-label">Rol *</label>
+                        <select class="form-select" id="editUserRole" required>
+                            <option value="">Seleccionar rol</option>
+                            <option value="superadmin">Superadmin</option>
+                            <option value="admin">Admin</option>
+                            <option value="profesor">Profesor</option>
+                            <option value="asistente">Asistente</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editUserActive" checked>
+                            <label class="form-check-label" for="editUserActive">
+                                Usuario Activo
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="updateUser()">
+                    <i class="fas fa-save me-2"></i>Actualizar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let users = [];
+let currentUser = null;
+
+// Cargar datos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    loadUsers();
+    
+    // Event listeners para filtros
+    document.getElementById('searchInput').addEventListener('input', filterUsers);
+    document.getElementById('roleFilter').addEventListener('change', filterUsers);
+    document.getElementById('statusFilter').addEventListener('change', filterUsers);
+});
+
+// Cargar usuarios
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/users', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            users = await response.json();
+            displayUsers(users);
+            updateStats();
+        } else {
+            showAlert('Error al cargar usuarios', 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error de conexión', 'danger');
+    }
+}
+
+// Mostrar usuarios en tabla
+function displayUsers(usersToShow) {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '';
+    
+    usersToShow.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>
+                <span class="badge ${getRoleBadgeClass(user.role)}">
+                    ${getRoleDisplayName(user.role)}
+                </span>
+            </td>
+            <td>
+                <span class="badge ${user.is_active ? 'bg-success' : 'bg-danger'}">
+                    ${user.is_active ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser(${user.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                ${user.id !== currentUser.id ? `
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                ` : ''}
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Filtrar usuarios
+function filterUsers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const roleFilter = document.getElementById('roleFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    let filteredUsers = users.filter(user => {
+        const matchesSearch = user.name.toLowerCase().includes(searchTerm) || 
+                            user.email.toLowerCase().includes(searchTerm);
+        const matchesRole = !roleFilter || user.role === roleFilter;
+        const matchesStatus = !statusFilter || user.is_active.toString() === statusFilter;
+        
+        return matchesSearch && matchesRole && matchesStatus;
+    });
+    
+    displayUsers(filteredUsers);
+}
+
+// Limpiar filtros
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    displayUsers(users);
+}
+
+// Crear usuario
+async function createUser() {
+    const formData = {
+        name: document.getElementById('userName').value,
+        email: document.getElementById('userEmail').value,
+        password: document.getElementById('userPassword').value,
+        role: document.getElementById('userRole').value
+    };
+    
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showAlert('Usuario creado exitosamente', 'success');
+            document.getElementById('createUserForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+            loadUsers();
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Error al crear usuario', 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error de conexión', 'danger');
+    }
+}
+
+// Editar usuario
+async function editUser(userId) {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    
+    document.getElementById('editUserId').value = user.id;
+    document.getElementById('editUserName').value = user.name;
+    document.getElementById('editUserEmail').value = user.email;
+    document.getElementById('editUserRole').value = user.role;
+    document.getElementById('editUserActive').checked = user.is_active;
+    document.getElementById('editUserPassword').value = '';
+    
+    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+// Actualizar usuario
+async function updateUser() {
+    const userId = document.getElementById('editUserId').value;
+    const formData = {
+        name: document.getElementById('editUserName').value,
+        email: document.getElementById('editUserEmail').value,
+        role: document.getElementById('editUserRole').value,
+        is_active: document.getElementById('editUserActive').checked
+    };
+    
+    const password = document.getElementById('editUserPassword').value;
+    if (password) {
+        formData.password = password;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showAlert('Usuario actualizado exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            loadUsers();
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Error al actualizar usuario', 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error de conexión', 'danger');
+    }
+}
+
+// Eliminar usuario
+async function deleteUser(userId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            showAlert('Usuario eliminado exitosamente', 'success');
+            loadUsers();
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Error al eliminar usuario', 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error de conexión', 'danger');
+    }
+}
+
+// Actualizar estadísticas
+function updateStats() {
+    const totalUsers = users.length;
+    const superadmins = users.filter(u => u.role === 'superadmin').length;
+    const admins = users.filter(u => u.role === 'admin').length;
+    const profesores = users.filter(u => u.role === 'profesor').length;
+    
+    document.getElementById('totalUsers').textContent = totalUsers;
+    document.getElementById('superadmins').textContent = superadmins;
+    document.getElementById('admins').textContent = admins;
+    document.getElementById('profesores').textContent = profesores;
+}
+
+// Funciones auxiliares
+function getRoleBadgeClass(role) {
+    switch (role) {
+        case 'superadmin': return 'bg-warning text-dark';
+        case 'admin': return 'bg-info';
+        case 'profesor': return 'bg-success';
+        case 'asistente': return 'bg-secondary';
+        default: return 'bg-primary';
+    }
+}
+
+function getRoleDisplayName(role) {
+    switch (role) {
+        case 'superadmin': return 'Superadmin';
+        case 'admin': return 'Admin';
+        case 'profesor': return 'Profesor';
+        case 'asistente': return 'Asistente';
+        default: return role;
+    }
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

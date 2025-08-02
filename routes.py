@@ -86,6 +86,113 @@ def get_profile():
         'created_at': user.created_at.isoformat()
     })
 
+# ==================== USUARIOS ====================
+
+@app.route('/api/users', methods=['GET'])
+@jwt_required()
+def get_users():
+    current_user = User.query.get(get_jwt_identity())
+    
+    # Solo superadmin y admin pueden ver usuarios
+    if current_user.role not in ['superadmin', 'admin']:
+        return jsonify({'error': 'No tienes permisos para ver usuarios'}), 403
+    
+    users = User.query.all()
+    return jsonify([{
+        'id': u.id,
+        'email': u.email,
+        'name': u.name,
+        'role': u.role,
+        'is_active': u.is_active,
+        'created_at': u.created_at.isoformat()
+    } for u in users])
+
+@app.route('/api/users', methods=['POST'])
+@jwt_required()
+def create_user():
+    current_user = User.query.get(get_jwt_identity())
+    
+    # Solo superadmin puede crear usuarios
+    if current_user.role != 'superadmin':
+        return jsonify({'error': 'Solo el superadmin puede crear usuarios'}), 403
+    
+    data = request.get_json()
+    
+    # Validar campos requeridos
+    required_fields = ['email', 'password', 'name', 'role']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({'error': f'El campo {field} es requerido'}), 400
+    
+    # Verificar si el usuario ya existe
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'El email ya está registrado'}), 400
+    
+    # Crear nuevo usuario
+    hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+    new_user = User(
+        email=data['email'],
+        password_hash=hashed_password,
+        name=data['name'],
+        role=data['role']
+    )
+    
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Usuario creado exitosamente',
+        'user': {
+            'id': new_user.id,
+            'email': new_user.email,
+            'name': new_user.name,
+            'role': new_user.role
+        }
+    }), 201
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+@jwt_required()
+def update_user(user_id):
+    current_user = User.query.get(get_jwt_identity())
+    
+    # Solo superadmin puede actualizar usuarios
+    if current_user.role != 'superadmin':
+        return jsonify({'error': 'Solo el superadmin puede actualizar usuarios'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    data = request.get_json()
+    
+    user.name = data.get('name', user.name)
+    user.email = data.get('email', user.email)
+    user.role = data.get('role', user.role)
+    user.is_active = data.get('is_active', user.is_active)
+    
+    if data.get('password'):
+        user.password_hash = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+    
+    db.session.commit()
+    
+    return jsonify({'message': 'Usuario actualizado exitosamente'})
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(user_id):
+    current_user = User.query.get(get_jwt_identity())
+    
+    # Solo superadmin puede eliminar usuarios
+    if current_user.role != 'superadmin':
+        return jsonify({'error': 'Solo el superadmin puede eliminar usuarios'}), 403
+    
+    # No permitir eliminar el propio usuario
+    if current_user.id == user_id:
+        return jsonify({'error': 'No puedes eliminar tu propia cuenta'}), 400
+    
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({'message': 'Usuario eliminado exitosamente'})
+
 # ==================== ESTUDIANTES ====================
 
 @app.route('/api/students', methods=['GET'])
